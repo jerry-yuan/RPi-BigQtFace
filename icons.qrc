@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file alias="Dashboard.png">icons/Dashboard.png</file>
+        <file alias="system-shutdown.svg">icons/system-shutdown.svg</file>
+        <file alias="system-log-out.svg">icons/system-log-out.svg</file>
+        <file alias="view-fresh.svg">icons/view-refresh.svg</file>
+        <file alias="emblem-system.svg">icons/emblem-system.svg</file>
+        <file alias="go-previous.svg">icons/go-previous.svg</file>
+    </qresource>
+</RCC>

@@ -2,20 +2,26 @@
 #include "ui_Face.h"
 #include "Logger.h"
 #include "SysFuncDialog.h"
-#include "Temperature.h"
 #include "GPIOAdapter.h"
+#include "FuncPanel.h"
+
+#include <QFileInfoList>
+#include <QFileInfo>
+#include <QDir>
 #include <QDebug>
 #include <QString>
 #include <QStringList>
 
+#include <QMessageBox>
 #include <QJsonArray>
 #include <QJsonObject>
-
+#include <QPluginLoader>
 Face::Face(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::Face)
 {
 	ui->setupUi(this);
+    this->loader=NULL;
 	Logger::setLogWidget(ui->logWidget);
 	connect(ui->clock,SIGNAL(timeMutated()),ui->networkMonitor,SLOT(updateTime()));
 
@@ -24,17 +30,20 @@ Face::Face(QWidget *parent) :
 	connect(this,SIGNAL(page0Actived()),ui->weatherWidget,SLOT(flushAll()));
 	//ui->clock->activate();
 	//ui->weatherWidget->flushAll();
+
+    /*
 	//挂载各种侧栏按钮
 	QRegExp funcBtnMathch("funcBtn_\\d+");
 	foreach(const QObject* obj,ui->funcBtnBar->children())
 		if(funcBtnMathch.exactMatch(obj->objectName()))
 			connect(static_cast<const QPushButton*>(obj),SIGNAL(clicked()),this,SLOT(activeFunc()));
-	//挂载系统操作
+    */
+    //挂载系统操作
 	connect(ui->sysFunc,SIGNAL(clicked()),this,SLOT(showSysFunc()));
 	//挂载返回按钮
 	connect(ui->goBackBtn,SIGNAL(clicked()),this,SLOT(goBack()));
 	//初始化后激活当前页
-	emit page0Actived();
+    emit page0Actived();
 }
 
 Face::~Face(){
@@ -53,27 +62,86 @@ void Face::pageChanged(int index){
 		qDebug()<<"WTF?"<<index;
 	}
 }
+void Face::show(){
+    QMainWindow::show();
+    loadFuncBtn();
+}
+
+void Face::loadFuncBtn(){
+    QDir pluginDir=QDir(qApp->applicationDirPath());
+    pluginDir.cd("plugins");
+#ifdef UNIX
+    pluginDir.setNameFilters(QStringList("*.so$"));
+#endif
+#ifdef WIN32
+    pluginDir.setNameFilters(QStringList("*.dll$"));
+#endif
+    QFileInfoList list = pluginDir.entryInfoList();
+    if(list.length()>0){
+        int counter=1;
+        ui->funcBtnLoadbar->setRange(0,list.length());
+
+        QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+        sizePolicy.setHorizontalStretch(0);
+        sizePolicy.setVerticalStretch(0);
+
+        QFont btnFont;
+        btnFont.setPointSize(12);
+
+        foreach(QFileInfo info,list){
+            QPluginLoader loader(info.absoluteFilePath());
+            if(loader.load()){
+                QPushButton *funcBtn=new QPushButton(ui->funcBtnBar);
+                funcBtn->setObjectName("funcBtn_"+info.fileName());
+                FuncPanel* instance=qobject_cast<FuncPanel*>(loader.instance());
+
+                funcBtn->setText(instance->name());
+                funcBtn->setIcon(instance->icon());
+
+                loader.unload();
+                funcBtn->setFont(btnFont);
+                funcBtn->setIconSize(QSize(24,24));
+
+                sizePolicy.setHeightForWidth(funcBtn->hasHeightForWidth());
+                funcBtn->setSizePolicy(sizePolicy);
+
+                ui->funcBtnLayout->addWidget(funcBtn);
+
+                connect(funcBtn,SIGNAL(clicked()),this,SLOT(activeFunc()));
+            }
+            ui->funcBtnLoadbar->setValue(counter++);
+        }
+    }
+    ui->funcBtnLoadbar->setVisible(false);
+}
+
 void Face::activeFunc(){
 	QString objName=sender()->objectName();
-	int id=objName.split('_').at(1).toInt();
-	QWidget* newWidget=NULL;
-	QString title=QString();
-	switch(id){
-	case 0:
-		newWidget=new Temperature(ui->funcPanel);
-		title="BCM2835核心温度曲线";
-		//ui->funcPanel->setWidget(newClock);
-		break;
-	}
-	ui->funcTitle->setText(title);
-	ui->funcPanel->setWidget(newWidget);
-	ui->container->setCurrentIndex(1);
+    QString libFile=objName.split('_').at(1);
+    QDir pluginDir(qApp->applicationDirPath());
+    pluginDir.cd("plugins");
+    FuncPanel* newWidget=NULL;
+    loader=new QPluginLoader(pluginDir.absoluteFilePath(libFile));
+    if(loader->load()){
+        newWidget=qobject_cast<FuncPanel*>(loader->instance());
+        ui->funcTitle->setText(newWidget->title());
+        ui->funcPanel->setWidget(newWidget);
+        ui->container->setCurrentIndex(1);
+        newWidget->active();
+    }else{
+        QMessageBox* box=new QMessageBox(QMessageBox::Critical,"Error","加载错误:无法加载"+libFile+"\n"+loader->errorString());
+        box->setFont(QFont("YaHei Consolas Hybrid"));
+        box->show();
+    }
 }
 void Face::goBack(){
-	QWidget* widget=ui->funcPanel->widget();
+    ui->container->setCurrentIndex(0);
+    FuncPanel* widget=qobject_cast<FuncPanel*>(ui->funcPanel->widget());
 	ui->funcPanel->setWidget(NULL);
-	delete widget;
-	ui->container->setCurrentIndex(0);
+    widget->deactive();
+    loader->unload();
+    delete loader;
+    loader=NULL;
 }
 void Face::showSysFunc(){
 	SysFuncDialog dialog;

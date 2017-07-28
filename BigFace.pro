@@ -6,7 +6,7 @@
 
 QT       += core gui sql network
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = BigFace
 TEMPLATE = app
@@ -24,8 +24,6 @@ SOURCES += main.cpp\
     SysFuncDialog.cpp \
     HaltDialog.cpp \
     EventServer.cpp \
-    Temperature.cpp \
-    qcustomplot.cpp \
     GPIOAdapter.cpp
 
 HEADERS  += Face.h \
@@ -40,9 +38,8 @@ HEADERS  += Face.h \
     SysFuncDialog.h \
     HaltDialog.h \
     EventServer.h \
-    Temperature.h \
-    qcustomplot.h \
-    GPIOAdapter.h
+    GPIOAdapter.h \
+    FuncPanel.h
 
 FORMS    += Face.ui \
     NetworkMonitor.ui \

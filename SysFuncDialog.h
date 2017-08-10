@@ -19,7 +19,7 @@ protected:
 	void mousePressEvent(QMouseEvent *){
 		resetTimer();
 	}
-	bool eventFilter(QObject *obj, QEvent *event);
+    bool eventFilter(QObject *obj, QEvent *event);
 private slots:
 	void halt();
 	void reboot();

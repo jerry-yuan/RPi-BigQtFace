@@ -54,7 +54,7 @@ private:
 	QString validCode;		//验证码
 	QString currentId;		//当前网号
 	QString currentName;	//当前网号所属人
-	int netIdDeadline;		//当前网号剩余时间
+    QDateTime netIdDeadline;		//当前网号过期时间
 
 	void startCheck();			//启动检测网络流程
 	void ethCKRequest();		//IP获取&内网检测		发起请求

@@ -27,6 +27,11 @@ SysFuncDialog::SysFuncDialog(QWidget *parent) :
 
 	connect(ui->halt,SIGNAL(clicked()),this,SLOT(hide()));
 	connect(ui->reboot,SIGNAL(clicked()),this,SLOT(hide()));
+
+    connect(ui->halt,SIGNAL(clicked(bool)),this,SLOT(deleteLater()));
+    connect(ui->reboot,SIGNAL(clicked(bool)),this,SLOT(deleteLater()));
+    connect(ui->close,SIGNAL(clicked(bool)),this,SLOT(deleteLater()));
+
 	connect(ui->exit,SIGNAL(clicked()),qApp,SLOT(quit()));
 
 	connect(ui->backlightSlider,SIGNAL(valueChanged(int)),GPIOAdapter::getInstance(),SLOT(setLCDBrightness(int)));
@@ -40,13 +45,16 @@ SysFuncDialog::SysFuncDialog(QWidget *parent) :
 
 	ui->backlightSlider->installEventFilter(this);
 
-	singleShot->start();
+    singleShot->start();
 }
+
+
 
 SysFuncDialog::~SysFuncDialog(){
 	delete ui;
-	delete timer;
+    delete timer;
 }
+
 void SysFuncDialog::halt(){
 	HaltDialog::getInstance()->halt(10);
 }

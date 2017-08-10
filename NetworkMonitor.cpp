@@ -56,6 +56,7 @@ NetworkMonitor::NetworkMonitor(QWidget *parent) :
 	validCode="";
 	//直接显示内网IP
 	showEthIP();
+    this->netIdDeadline=QDateTime::fromTime_t(0);
 	//初始化 计时器
 	ui->freshTime->setText(QDateTime::currentDateTime().addSecs(5).toString("HH:mm:ss"));
 	setTiming(5);
@@ -118,18 +119,16 @@ void NetworkMonitor::idInfRequest(){
 void NetworkMonitor::idInfRequestRespond(){
 	disconnect(reply,SIGNAL(finished()),this,SLOT(idInfRequestRespond()));
 	if(reply->error()==QNetworkReply::OperationCanceledError){
-		reply->disconnect();
-		ui->account->setText("[拉取超时]");
-		ui->name->setText("[拉取超时]");
-		ui->remainTime->setText("[拉取超时]");
+        reply->disconnect();
+        ui->netId->setText("[拉取超时]");
+        ui->netIdDead->setText("[拉取超时]");
 		checkTerminated("拉取网号状态数据超时!");
 		return;
 	}
 	if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()!=200){
-		ui->account->setText("[通信失败]");
-		ui->name->setText("[通信失败]");
-		ui->remainTime->setText("[通信失败]");
-		checkTerminated("认证服务器返回异常!");
+        ui->netId->setText("[通信失败]");
+        ui->netIdDead->setText("[通信失败]");
+        checkTerminated(QString("认证服务器返回异常(%1)!").arg(QString::number(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt())));
 		return;
 	}
 	QJsonDocument qjd=QJsonDocument::fromJson(reply->readAll());
@@ -138,38 +137,42 @@ void NetworkMonitor::idInfRequestRespond(){
 	QJsonValue userName=stat.value("userName");
 	QJsonValue ballInfoRaw=stat.value("ballInfo");
 	if(userId.isNull()){
-		ui->account->setText("[未登录网号]");
+        ui->netId->setText("[未登录网号]");
 		Logger::warning("未登网号,尝试登录网号!");
 		loginPreRequest();
 		return;
 	}
 	currentId=userId.toString("解析失败");
 	currentName=userName.toString("解析失败");
+    if(currentId==currentName&&currentId!="解析失败"){
+        Logger::log("重新获取网号信息...");
+        idInfRequest();
+        return;
+    }
 	Logger::info(QString("网号:%1(%2)").arg(currentId,currentName));
 	QJsonDocument ballInfo=QJsonDocument::fromJson(ballInfoRaw.toString("").toUtf8());
 	QJsonArray balls=ballInfo.array();
 	QString remainDate="";
 	if(balls.size()>2){
 		QJsonObject dateBall=balls.at(1).toObject();
-		netIdDeadline=dateBall.value("value").toString().toULong();
-		int remainTime=netIdDeadline-QDateTime::currentDateTime().toTime_t();
+        netIdDeadline=QDateTime::fromTime_t(dateBall.value("value").toString().toULong());
+        int remainTime=netIdDeadline.toTime_t()-QDateTime::currentDateTime().toTime_t();
 		remainDate=formatTime(remainTime);
 		if(remainTime>86400){
 			Logger::info("网号剩余时间充足"+remainDate);
-			ui->remainTime->setStyleSheet("color:#000000");
+            ui->netId->setStyleSheet("color:#000000");
 		}else if(remainTime>0){
 			Logger::warning("网号即将过期"+remainDate);
-			ui->remainTime->setStyleSheet("color:#808000");
+            ui->netId->setStyleSheet("color:#808000");
 		}else{
 			remainDate="[已到期]";
 			Logger::error("网号已经到期,即将断网!");
-			ui->remainTime->setStyleSheet("color:#FF0000");
+            ui->netId->setStyleSheet("color:#FF0000");
 		}
 	}
-	ui->account->setText(currentId);
-	ui->name->setText(currentName);
-	ui->remainTime->setText(remainDate);
-	aliECSRequest();
+    ui->netId->setText(QString("%1(%2)").arg(currentId,currentName));
+    ui->netIdDead->setText(QString("%1%2").arg(netIdDeadline.toString("yyyy-MM-dd"),remainDate));
+    aliECSRequest();
 }
 /* 发起 阿里云转储请求*/
 void NetworkMonitor::aliECSRequest(){
@@ -437,8 +440,8 @@ void NetworkMonitor::refreshImmediately(){
 }
 void NetworkMonitor::updateTime(){
 	ui->freshTime->setText(QDateTime::currentDateTime().addSecs(timing).toString("HH:mm:ss"));
-	if(netIdDeadline!=0)
-		ui->remainTime->setText(formatTime(netIdDeadline-QDateTime::currentDateTime().toTime_t()));
+    if(netIdDeadline.toTime_t()!=0)
+        ui->netIdDead->setText(QString("%1%2").arg(netIdDeadline.toString("yyyy-MM-dd"),formatTime(netIdDeadline.secsTo(QDateTime::currentDateTime()))));
 }
 QString NetworkMonitor::formatTime(int t){
 	int timeVal[]={1,60,3600,86400};

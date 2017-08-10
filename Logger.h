@@ -28,8 +28,10 @@ public:
 	static void logout(QString content,QString type);
 	static void logout(QString content, LogType type=Log);
 	static Logger* getInstance();
+    static void clearWidget();
 
 	void addLogToQueue(log_t log);
+    void clearLogWidget();
 	QQueue<log_t>* queue();
 protected:
 	void run();

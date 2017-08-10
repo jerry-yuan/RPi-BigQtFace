@@ -45,7 +45,9 @@ void EventServer::eventReceived(){
 		if(event.value("beep").toBool(false))
 			GPIOAdapter::beep(2);
 		HaltDialog::getInstance()->reboot(event.value("delay").toInt(60),event.value("beep").toBool(false));
-	}else{
+    }else if(eventName=="clearLogWidget"){
+        Logger::clearWidget();
+    }else{
 		Logger::warning("未知的远程命令:"+eventName);
 	}
 }

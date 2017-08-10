@@ -11,7 +11,7 @@ DBUtil::DBUtil(QString dbName)
 
 DBUtil* DBUtil::getInstance(){
 	if(DBUtil::instance==NULL)
-		DBUtil::instance=new DBUtil(QCoreApplication::applicationDirPath()+"/Face.db");
+        DBUtil::instance=new DBUtil(qApp->applicationDirPath()+"/Face.db");
 	return DBUtil::instance;
 }
 

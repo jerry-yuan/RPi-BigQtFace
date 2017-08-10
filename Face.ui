@@ -94,14 +94,14 @@
               <widget class="Clock" name="clock">
                <property name="minimumSize">
                 <size>
-                 <width>282</width>
-                 <height>68</height>
+                 <width>251</width>
+                 <height>60</height>
                 </size>
                </property>
                <property name="maximumSize">
                 <size>
-                 <width>282</width>
-                 <height>68</height>
+                 <width>251</width>
+                 <height>60</height>
                 </size>
                </property>
                <property name="styleSheet">
@@ -164,7 +164,44 @@
               <number>5</number>
              </property>
              <item>
-              <widget class="NetworkMonitor" name="networkMonitor" native="true"/>
+              <widget class="NetworkMonitor" name="networkMonitor" native="true">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>230</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>251</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="groupBox_5">
+            <property name="title">
+             <string>系统参数</string>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_4">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
+             <item row="0" column="0">
+              <widget class="SysResMonitor" name="sysResMonitor" native="true"/>
              </item>
             </layout>
            </widget>
@@ -493,8 +530,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>65</width>
-             <height>16</height>
+             <width>782</width>
+             <height>410</height>
             </rect>
            </property>
           </widget>
@@ -525,6 +562,12 @@
    <class>Clock</class>
    <extends>QLCDNumber</extends>
    <header>Clock.h</header>
+  </customwidget>
+  <customwidget>
+   <class>SysResMonitor</class>
+   <extends>QWidget</extends>
+   <header>SysResMonitor.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>

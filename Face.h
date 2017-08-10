@@ -6,10 +6,9 @@
 #include "EventServer.h"
 namespace Ui {
 	class Face;
-	}
+}
 
-class Face : public QMainWindow
-{
+class Face : public QMainWindow{
 	Q_OBJECT
 
 public:
@@ -25,8 +24,8 @@ private slots:
 	void pageChanged(int index);
     void loadFuncBtn();
 	void activeFunc();
-	void goBack();
-	void showSysFunc();
+    void goBack();
+    void showSysFunc();
 private:
 	EventServer eventServer;
     QPluginLoader* loader;

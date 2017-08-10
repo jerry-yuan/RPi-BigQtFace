@@ -6,7 +6,7 @@
 Clock::Clock(QWidget *parent):QLCDNumber(parent){
 	timer=new QTimer(this);
 	connect(timer,SIGNAL(timeout()),this,SLOT(flush()));
-	timer->setInterval(500);
+    timer->setInterval(250);
 }
 Clock::~Clock(){
 	delete timer;

@@ -39,6 +39,9 @@ void Logger::addLogToWidget(log_t log){
 	logList->addItem(item);
 	logList->scrollToBottom();
 }
+void Logger::clearWidget(){
+    logList->clear();
+}
 void Logger::logout(QString content, QString type){
 	QHash<QString,LogType> *logTypeMatching=new QHash<QString,LogType>();
 	logTypeMatching->insert("Info",Info);

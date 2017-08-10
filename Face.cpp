@@ -26,20 +26,14 @@ Face::Face(QWidget *parent) :
 	connect(ui->clock,SIGNAL(timeMutated()),ui->networkMonitor,SLOT(updateTime()));
 
 	connect(ui->container,SIGNAL(currentChanged(int)),this,SLOT(pageChanged(int)));
+    connect(this,SIGNAL(pageChanged()),ui->clock,SLOT(deactivate()));
 	connect(this,SIGNAL(page0Actived()),ui->clock,SLOT(activate()));
+    connect(this,SIGNAL(pageChanged()),ui->weatherWidget,SLOT(deactivate()));
 	connect(this,SIGNAL(page0Actived()),ui->weatherWidget,SLOT(flushAll()));
-	//ui->clock->activate();
-	//ui->weatherWidget->flushAll();
-
-    /*
-	//挂载各种侧栏按钮
-	QRegExp funcBtnMathch("funcBtn_\\d+");
-	foreach(const QObject* obj,ui->funcBtnBar->children())
-		if(funcBtnMathch.exactMatch(obj->objectName()))
-			connect(static_cast<const QPushButton*>(obj),SIGNAL(clicked()),this,SLOT(activeFunc()));
-    */
+    connect(this,SIGNAL(pageChanged()),ui->sysResMonitor,SLOT(deactivate()));
+    connect(this,SIGNAL(page0Actived()),ui->sysResMonitor,SLOT(activate()));
     //挂载系统操作
-	connect(ui->sysFunc,SIGNAL(clicked()),this,SLOT(showSysFunc()));
+    connect(ui->sysFunc,SIGNAL(clicked()),this,SLOT(showSysFunc()));
 	//挂载返回按钮
 	connect(ui->goBackBtn,SIGNAL(clicked()),this,SLOT(goBack()));
 	//初始化后激活当前页
@@ -64,17 +58,17 @@ void Face::pageChanged(int index){
 }
 void Face::show(){
     QMainWindow::show();
-    loadFuncBtn();
+    QTimer::singleShot(1000,this,SLOT(loadFuncBtn()));
 }
 
 void Face::loadFuncBtn(){
     QDir pluginDir=QDir(qApp->applicationDirPath());
     pluginDir.cd("plugins");
 #ifdef UNIX
-    pluginDir.setNameFilters(QStringList("*.so$"));
+    pluginDir.setNameFilters(QStringList("*.so"));
 #endif
 #ifdef WIN32
-    pluginDir.setNameFilters(QStringList("*.dll$"));
+    pluginDir.setNameFilters(QStringList("*.dll"));
 #endif
     QFileInfoList list = pluginDir.entryInfoList();
     if(list.length()>0){
@@ -144,6 +138,6 @@ void Face::goBack(){
     loader=NULL;
 }
 void Face::showSysFunc(){
-	SysFuncDialog dialog;
-	dialog.exec();
+    SysFuncDialog dialog(this);
+    dialog.exec();
 }

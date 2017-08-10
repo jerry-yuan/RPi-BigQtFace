@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icon.svg</file>
+        <file>chanels.json</file>
+    </qresource>
+</RCC>

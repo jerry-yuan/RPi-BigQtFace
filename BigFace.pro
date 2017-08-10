@@ -24,7 +24,8 @@ SOURCES += main.cpp\
     SysFuncDialog.cpp \
     HaltDialog.cpp \
     EventServer.cpp \
-    GPIOAdapter.cpp
+    GPIOAdapter.cpp \
+    SysResMonitor.cpp
 
 HEADERS  += Face.h \
     NetworkMonitor.h \
@@ -39,7 +40,8 @@ HEADERS  += Face.h \
     HaltDialog.h \
     EventServer.h \
     GPIOAdapter.h \
-    FuncPanel.h
+    FuncPanel.h \
+    SysResMonitor.h
 
 FORMS    += Face.ui \
     NetworkMonitor.ui \
@@ -47,7 +49,7 @@ FORMS    += Face.ui \
     NetworkSpeed.ui \
     SysFuncDialog.ui \
     HaltDialog.ui \
-    Temperature.ui
+    SysResMonitor.ui
 
 target.path=/home/pi/inject
 INSTALLS+=target

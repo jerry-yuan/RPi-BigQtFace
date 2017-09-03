@@ -8,8 +8,10 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QSqlQuery>
+#include <QSqlError>
 #include <QNetworkInterface>
 #include <QDebug>
+#include <QtMath>
 NetworkMonitor::NetworkMonitor(QWidget *parent) :
 	QWidget(parent),
 	ui(new Ui::NetworkMonitor)
@@ -77,15 +79,15 @@ void NetworkMonitor::startCheck(){
 /*发起 IP获取&内网检测*/
 void NetworkMonitor::ethCKRequest(){
 	Logger::log("正在检测校园网连接...");
-	if(reply) delete reply;
+    if(reply) delete reply;
 	reply=netManager->get(vUPC);
 	QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
 	connect(reply,SIGNAL(finished()),this,SLOT(ethCKRequestRespond()));
 }
 /* IP获取&内网检测 响应 */
 void NetworkMonitor::ethCKRequestRespond(){
-	disconnect(reply,SIGNAL(finished()),this,SLOT(ethCKRequestRespond()));
-	if(reply->error()==QNetworkReply::OperationCanceledError){
+    reply->blockSignals(true);
+    if(reply->error()==QNetworkReply::OperationCanceledError){
 		reply->disconnect();
 		checkTerminated("校园网检测超时!");
 		return;
@@ -105,7 +107,7 @@ void NetworkMonitor::ethCKRequestRespond(){
 		return checkTerminated("查询公网IP失败!");
 	ui->intIP->setText(IPS[IPS.count()-1]);
 	Logger::info("校园网连接正常!");
-	idInfRequest();
+    idInfRequest();
 }
 /*发起 检查网号登录状态*/
 void NetworkMonitor::idInfRequest(){
@@ -117,17 +119,17 @@ void NetworkMonitor::idInfRequest(){
 }
 /*网号状态拉取 请求响应*/
 void NetworkMonitor::idInfRequestRespond(){
-	disconnect(reply,SIGNAL(finished()),this,SLOT(idInfRequestRespond()));
+    reply->blockSignals(true);
 	if(reply->error()==QNetworkReply::OperationCanceledError){
         reply->disconnect();
         ui->netId->setText("[拉取超时]");
-        ui->netIdDead->setText("[拉取超时]");
+        //ui->netIdDead->setText("[拉取超时]");
 		checkTerminated("拉取网号状态数据超时!");
 		return;
 	}
 	if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()!=200){
         ui->netId->setText("[通信失败]");
-        ui->netIdDead->setText("[通信失败]");
+        //ui->netIdDead->setText("[通信失败]");
         checkTerminated(QString("认证服务器返回异常(%1)!").arg(QString::number(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt())));
 		return;
 	}
@@ -152,26 +154,13 @@ void NetworkMonitor::idInfRequestRespond(){
 	Logger::info(QString("网号:%1(%2)").arg(currentId,currentName));
 	QJsonDocument ballInfo=QJsonDocument::fromJson(ballInfoRaw.toString("").toUtf8());
 	QJsonArray balls=ballInfo.array();
-	QString remainDate="";
-	if(balls.size()>2){
-		QJsonObject dateBall=balls.at(1).toObject();
-        netIdDeadline=QDateTime::fromTime_t(dateBall.value("value").toString().toULong());
-        int remainTime=netIdDeadline.toTime_t()-QDateTime::currentDateTime().toTime_t();
-		remainDate=formatTime(remainTime);
-		if(remainTime>86400){
-			Logger::info("网号剩余时间充足"+remainDate);
-            ui->netId->setStyleSheet("color:#000000");
-		}else if(remainTime>0){
-			Logger::warning("网号即将过期"+remainDate);
-            ui->netId->setStyleSheet("color:#808000");
-		}else{
-			remainDate="[已到期]";
-			Logger::error("网号已经到期,即将断网!");
-            ui->netId->setStyleSheet("color:#FF0000");
-		}
-	}
+    if(balls.size()>2){
+        QJsonObject flowBall=balls.at(1).toObject();
+        QString bytes=flowBall.value("value").toString("0.0").split(".")[0];
+        ui->netIdFlow->setText(latterFlow(bytes.toULongLong()));
+    }
     ui->netId->setText(QString("%1(%2)").arg(currentId,currentName));
-    ui->netIdDead->setText(QString("%1%2").arg(netIdDeadline.toString("yyyy-MM-dd"),remainDate));
+    //ui->netIdDead->setText(QString("%1%2").arg(netIdDeadline.toString("yyyy-MM-dd"),remainDate));
     aliECSRequest();
 }
 /* 发起 阿里云转储请求*/
@@ -186,8 +175,8 @@ void NetworkMonitor::aliECSRequest(){
 }
 /* 检查网络 请求响应*/
 void NetworkMonitor::aliECSRequestRespond(){
-	disconnect(reply,SIGNAL(finished()),this,SLOT(aliECSRequestRespond()));
-	if(reply->error()==QNetworkReply::OperationCanceledError){
+    reply->blockSignals(true);
+    if(reply->error()==QNetworkReply::OperationCanceledError){
 		reply->disconnect();
 		checkTerminated("更新阿里云超时!");
 		return;
@@ -210,7 +199,8 @@ void NetworkMonitor::dnsCKRequest(){
 }
 /*DNS检查 请求响应*/
 void NetworkMonitor::dnsCKRequestRespond(){
-	disconnect(reply,SIGNAL(finished()),this,SLOT(dnsCKRequestRespond()));
+    //disconnect(reply,SIGNAL(finished()),this,SLOT(dnsCKRequestRespond()));
+    reply->blockSignals(true);
 	if(reply->error()==QNetworkReply::OperationCanceledError){
 		reply->disconnect();
 		checkTerminated("请求DNSPod超时!");
@@ -241,7 +231,7 @@ void NetworkMonitor::dnsSTRequest(){
 }
 /*DNS设定 请求响应*/
 void NetworkMonitor::dnsSTRequestRespond(){
-	disconnect(reply,SIGNAL(finished()),this,SLOT(dnsSTRequestRespond()));
+    reply->blockSignals(true);
 	if(reply->error()==QNetworkReply::OperationCanceledError){
 		reply->disconnect();
 		checkTerminated("请求DNSPod超时!");
@@ -265,7 +255,7 @@ void NetworkMonitor::loginPreRequest(){
 }
 /*登录网号预备 响应*/
 void NetworkMonitor::loginPreRequestRespond(){
-	disconnect(reply,SIGNAL(finished()),this,SLOT(loginPreRequestRespond()));
+    reply->blockSignals(true);
 	if(reply->error()==QNetworkReply::OperationCanceledError){
 		reply->disconnect();
 		checkTerminated("认证服务器请求超时!");
@@ -295,13 +285,14 @@ void NetworkMonitor::loginPgChkRequest(){
 }
 /*页面检查 请求响应*/
 void NetworkMonitor::loginPgChkRequestRespond(){
-	disconnect(reply,SIGNAL(finished()),this,SLOT(loginPgChkRequestRespond()));
+    //disconnect(reply,SIGNAL(finished()),this,SLOT(loginPgChkRequestRespond()));
+    reply->blockSignals(true);
 	if(reply->error()==QNetworkReply::OperationCanceledError){
 		reply->disconnect();
-		checkTerminated("登录网号超时!");
+        checkTerminated("检查网络环境超时!");
 		return;
 	}else if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()!=200){
-		checkTerminated("登录网号时发生网络错误!");
+        checkTerminated("检查网络环境时发生网络错误!");
 		return;
 	}
 	QJsonObject data=QJsonDocument::fromJson(reply->readAll()).object();
@@ -316,8 +307,8 @@ void NetworkMonitor::loginPgChkRequestRespond(){
 
 /*发起 登录网号*/
 void NetworkMonitor::loginRequest(){
-	QString raw("operatorPwd=&operatorUserId=&password=%2&queryString=%3&service=&userId=%1&validcode=%4");
-	raw=raw.arg("1409030301","123456Abc",QString(netLoginQS.toLocal8Bit().toPercentEncoding()),validCode);
+    QString raw("operatorPwd=&operatorUserId=&password=%2&queryString=%4&service=%3&userId=%1&validcode=%5");
+    raw=raw.arg("1409030301","123456Abc","default",QString(netLoginQS.toLocal8Bit().toPercentEncoding()),validCode);
 	if(reply) delete reply;
 	reply=netManager->post(netLogin,raw.toLatin1());
 	QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
@@ -325,7 +316,7 @@ void NetworkMonitor::loginRequest(){
 }
 /*登网号 请求响应*/
 void NetworkMonitor::loginRequestRespond(){
-	disconnect(reply,SIGNAL(finished()),this,SLOT(loginRequestRespond()));
+    reply->blockSignals(true);
 	if(reply->error()==QNetworkReply::OperationCanceledError){
 		reply->disconnect();
 		checkTerminated("登录网号超时!");
@@ -360,13 +351,13 @@ void NetworkMonitor::vCodeRequest(){
 }
 /*更新验证码 响应槽*/
 void NetworkMonitor:: vCodeRequestRespond(){
-	disconnect(reply,SIGNAL(finished()),this,SLOT(loginRequestRespond()));
-	if(reply->error()==QNetworkReply::OperationCanceledError){
+    reply->blockSignals(true);
+    if(reply->error()==QNetworkReply::OperationCanceledError){
 		reply->disconnect();
 		checkTerminated("获取验证码超时!");
 		return;
 	}
-	QByteArray data=reply->readAll();
+    QByteArray data=reply->readAll();
 	QString picMD5=QString(QCryptographicHash::hash(data,QCryptographicHash::Md5).toHex());
 	QSqlQuery* sqlHandle=DBUtil::getSqlHandle();
 	sqlHandle->prepare("Select code from vcode where md5=?");
@@ -376,7 +367,7 @@ void NetworkMonitor:: vCodeRequestRespond(){
 		validCode=sqlHandle->value("code").toString();
 		Logger::info("验证码:"+validCode);
 		loginRequest();
-	}else{
+    }else{
 		checkTerminated("验证码识别失败!");
 	}
 }
@@ -440,8 +431,8 @@ void NetworkMonitor::refreshImmediately(){
 }
 void NetworkMonitor::updateTime(){
 	ui->freshTime->setText(QDateTime::currentDateTime().addSecs(timing).toString("HH:mm:ss"));
-    if(netIdDeadline.toTime_t()!=0)
-        ui->netIdDead->setText(QString("%1%2").arg(netIdDeadline.toString("yyyy-MM-dd"),formatTime(netIdDeadline.secsTo(QDateTime::currentDateTime()))));
+    //if(netIdDeadline.toTime_t()!=0)
+        //ui->netIdDead->setText(QString("%1%2").arg(netIdDeadline.toString("yyyy-MM-dd"),formatTime(netIdDeadline.secsTo(QDateTime::currentDateTime()))));
 }
 QString NetworkMonitor::formatTime(int t){
 	int timeVal[]={1,60,3600,86400};
@@ -449,4 +440,9 @@ QString NetworkMonitor::formatTime(int t){
 	int i=0;
 	for(i=0;i<3&&timeVal[i]<t&&timeVal[i+1]<t;i++);
 	return QString("[%1%2]").arg(QString::number(t/timeVal[i]),timeUnit[i]);
+}
+QString NetworkMonitor::latterFlow(quint64 f){
+    int rate=f>0?qFloor(qLn(f)/qLn(1024)):0;
+    const QString units[]={"B","KB","MB","GB","TB","PB","EB"};
+    return QString("%1%2").arg(QString::number(f/qPow(1024,rate),'f',1),units[rate]);
 }

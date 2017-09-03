@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>320</width>
+    <width>324</width>
     <height>68</height>
    </rect>
   </property>
@@ -109,7 +109,7 @@
         </font>
        </property>
        <property name="text">
-        <string>300.00MB</string>
+        <string>3000.00MB</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -138,7 +138,7 @@
         </font>
        </property>
        <property name="text">
-        <string>300.00MB</string>
+        <string>3000.00MB</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -184,7 +184,7 @@
         </font>
        </property>
        <property name="text">
-        <string>123.5KB/S</string>
+        <string>1234.5KB/S</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -213,7 +213,7 @@
         </font>
        </property>
        <property name="text">
-        <string>123.5KB/S</string>
+        <string>1234.5KB/S</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

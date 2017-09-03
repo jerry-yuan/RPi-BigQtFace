@@ -74,6 +74,7 @@ private:
 	void setTiming(int length);	//设定计时器长度
 
 	QString formatTime(int t);
+    QString latterFlow(quint64 f);
 };
 
 #endif // NETWORKMONITOR_H

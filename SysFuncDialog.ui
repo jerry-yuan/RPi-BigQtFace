@@ -296,6 +296,9 @@
        <height>32</height>
       </size>
      </property>
+     <property name="styleSheet">
+      <string notr="true">QSlider::groove:horizontal{background:#E8EDF2;height:8px;border-radius:4px;}QSlider::add-page:horizontal{background:#E8EDF2;height:8px;border-radius:4px;}QSlider::sub-page:horizontal{background:#1ABC9C;height:8px;border-radius:4px;}QSlider::handle:horizontal{width:13px;margin-top:-3px;margin-bottom:-3px;border-radius:6px;background:qradialgradient(spread:pad,cx:0.5,cy:0.5,radius:0.5,fx:0.5,fy:0.5,stop:0.6 #FFFFFF,stop:0.8 #1ABC9C);}QSlider::groove:vertical{width:8px;border-radius:4px;background:#E8EDF2;}QSlider::add-page:vertical{width:8px;border-radius:4px;background:#1ABC9C;}QSlider::sub-page:vertical{width:8px;border-radius:4px;background:#E8EDF2;}QSlider::handle:vertical{height:14px;margin-left:-3px;margin-right:-3px;border-radius:6px;background:qradialgradient(spread:pad,cx:0.5,cy:0.5,radius:0.5,fx:0.5,fy:0.5,stop:0.6 #FFFFFF,stop:0.8 #1ABC9C);}</string>
+     </property>
      <property name="minimum">
       <number>11</number>
      </property>

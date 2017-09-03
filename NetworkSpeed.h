@@ -18,11 +18,11 @@ private slots:
 	void calcSpeed();
 private:
 	QTimer* timer;
-	unsigned long long uploaded;
-	unsigned long long downloaded;
+    quint64 uploaded;
+    quint64 downloaded;
 	//long unsigned uploaded;
 	//long unsigned downloaded;
-	QString bitCountToString(unsigned long long sum);
+    QString bitCountToString(quint64 sum);
 	Ui::NetworkSpeed *ui;
 
 };

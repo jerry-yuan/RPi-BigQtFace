@@ -32,20 +32,21 @@ void NetworkSpeed::calcSpeed(){
 	return;
 #endif
 	QFile *fp=new QFile("/proc/net/dev");
-	while(!fp->isOpen())
-		fp->open(QIODevice::ReadOnly|QIODevice::Text);
-	fp->readLine();
-	fp->readLine();
-	fp->readLine();
-	QString eth0(fp->readLine());
+    if(!fp->open(QIODevice::ReadOnly|QIODevice::Text)){
+        Logger::error("获取网络流量失败!");
+        return;
+    }
+    QTextStream in(fp);
+    for(int i=0;i<3;i++) in.readLine();
+    QString eth0=in.readLine();
 	fp->close();
 	delete fp;
 	QStringList data=eth0.split(" ",QString::SkipEmptyParts);
 	if(data.count()<10) return;
-	unsigned long long newDown=data.at(1).toULong();
-	unsigned long long newUp=data.at(9).toULong();
-	unsigned dDown=newDown-downloaded;
-	unsigned dUp=newUp-uploaded;
+    quint64 newDown=data.at(1).toULong();
+    quint64 newUp=data.at(9).toULong();
+    quint32 dDown=newDown-downloaded;
+    quint32 dUp=newUp-uploaded;
 	ui->download->setText(bitCountToString(newDown));
 	ui->upload->setText(bitCountToString(newUp));
 	ui->dSpeed->setText(bitCountToString(dDown)+"/S");
@@ -53,7 +54,7 @@ void NetworkSpeed::calcSpeed(){
 	downloaded=newDown;
 	uploaded=newUp;
 }
-QString NetworkSpeed::bitCountToString(unsigned long long sum){
+QString NetworkSpeed::bitCountToString(quint64 sum){
 	int rate=sum>0?qFloor(qLn(sum)/qLn(1024)):0;
 	const QString units[]={"B","KB","MB","GB","TB","PB","EB"};
 	return QString("%1%2").arg(QString::number(sum/qPow(1024,rate),'f',1),units[rate]);

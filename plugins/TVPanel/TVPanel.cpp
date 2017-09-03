@@ -66,12 +66,13 @@ void TVPanel::changeChanel(){
     startOmxplayer();
 }
 void TVPanel::startOmxplayer(){
-    int x1=9;
-    int y1=61;
+    QPoint leftTop=ui->video->mapToGlobal(QPoint(0,0));
+    int x1=leftTop.x();//9
+    int y1=leftTop.y();//61
     int x2=x1+ui->video->width();
     int y2=y1+ui->video->height();
     //qDebug()<<"startOmxPlayer";
-    QString command=QString("omxplayer --layer 99 --win %1 -o local %2");
+    QString command=QString("omxplayer --layer 2 --win %1 -o local %2");
     QString pos=QString("%1,%2,%3,%4")
             .arg(QString::number(x1),QString::number(y1),QString::number(x2),QString::number(y2));
     command=command.arg(pos,this->chanels->value(currentChanel));

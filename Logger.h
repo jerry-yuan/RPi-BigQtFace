@@ -36,7 +36,6 @@ public:
 protected:
 	void run();
 private:
-
 	static QListWidget* logList;
 	static Logger* threadIns;
 	QMutex* qMutex;

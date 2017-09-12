@@ -60,7 +60,7 @@ NetworkMonitor::NetworkMonitor(QWidget *parent) :
 	showEthIP();
     this->netIdDeadline=QDateTime::fromTime_t(0);
 	//初始化 计时器
-	ui->freshTime->setText(QDateTime::currentDateTime().addSecs(5).toString("HH:mm:ss"));
+    ui->freshTime->setText(QDateTime::currentDateTime().addSecs(5).toString("HH:mm:ss"));
 	setTiming(5);
 	QTimer::singleShot(0,this,SLOT(beat()));
 	//初始化 按钮
@@ -81,8 +81,8 @@ void NetworkMonitor::ethCKRequest(){
 	Logger::log("正在检测校园网连接...");
     if(reply) delete reply;
 	reply=netManager->get(vUPC);
-	QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
-	connect(reply,SIGNAL(finished()),this,SLOT(ethCKRequestRespond()));
+    QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
+    connect(reply,SIGNAL(finished()),this,SLOT(ethCKRequestRespond()));
 }
 /* IP获取&内网检测 响应 */
 void NetworkMonitor::ethCKRequestRespond(){
@@ -114,7 +114,7 @@ void NetworkMonitor::idInfRequest(){
 	Logger::log("正在拉取网号状态...");
 	if(reply) delete reply;
 	reply=netManager->post(netIDInfo,QByteArray("userIndex="));
-	QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
+    QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
 	connect(reply,SIGNAL(finished()),this,SLOT(idInfRequestRespond()));
 }
 /*网号状态拉取 请求响应*/
@@ -169,8 +169,8 @@ void NetworkMonitor::aliECSRequest(){
 	if(reply) delete reply;
 	QString raw("TG=Raspi&IP=%1&timestamp=%2&Life=1200");
 	raw=raw.arg(ui->intIP->text(),QString::number(QDateTime::currentDateTime().toTime_t()));
-	reply=netManager->post(aliECS,raw.toUtf8());
-	QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
+    reply=netManager->post(aliECS,raw.toUtf8());
+    QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
 	connect(reply,SIGNAL(finished()),this,SLOT(aliECSRequestRespond()));
 }
 /* 检查网络 请求响应*/
@@ -193,8 +193,8 @@ void NetworkMonitor::dnsCKRequest(){
 	Logger::log("正在检查DNS数据...");
 	QByteArray data("login_token=19255,ed8e437c6e7a30b57a60aa1e787b9940&format=json&domain=jerryhome.tk&record_id=195272416");
 	if(reply) delete reply;
-	reply=netManager->post(DNSReader,data);
-	QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
+    reply=netManager->post(DNSReader,data);
+    QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
 	connect(reply,SIGNAL(finished()),this,SLOT(dnsCKRequestRespond()));
 }
 /*DNS检查 请求响应*/
@@ -226,8 +226,10 @@ void NetworkMonitor::dnsSTRequest(){
 	Logger::log("正在更新DNS数据...");
 	if(reply) delete reply;
 	reply=netManager->post(DNSPoster,raw.toLatin1());
-	QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
+    QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
+
 	connect(reply,SIGNAL(finished()),this,SLOT(dnsSTRequestRespond()));
+
 }
 /*DNS设定 请求响应*/
 void NetworkMonitor::dnsSTRequestRespond(){
@@ -250,7 +252,7 @@ void NetworkMonitor::loginPreRequest(){
 	Logger::log("正在检测认证服务器状态...");
 	if(reply) delete reply;
 	reply=netManager->get(aliECS);
-	QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
+    QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
 	connect(reply,SIGNAL(finished()),this,SLOT(loginPreRequestRespond()));
 }
 /*登录网号预备 响应*/
@@ -280,7 +282,7 @@ void NetworkMonitor::loginPgChkRequest(){
 	QString raw=QString("queryString=%1").arg(netLoginQS);
 	if(reply) delete reply;
 	reply=netManager->post(pgCheck,raw.toLatin1());
-	QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
+    QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
 	connect(reply,SIGNAL(finished()),this,SLOT(loginPgChkRequestRespond()));
 }
 /*页面检查 请求响应*/
@@ -308,10 +310,11 @@ void NetworkMonitor::loginPgChkRequestRespond(){
 /*发起 登录网号*/
 void NetworkMonitor::loginRequest(){
     QString raw("operatorPwd=&operatorUserId=&password=%2&queryString=%4&service=%3&userId=%1&validcode=%5");
-    raw=raw.arg("1409030301","123456Abc","default",QString(netLoginQS.toLocal8Bit().toPercentEncoding()),validCode);
+    //raw=raw.arg("1409030301","123456Abc","default",QString(netLoginQS.toLocal8Bit().toPercentEncoding()),validCode);
+    raw=raw.arg("1407030207","528204","cmcc",QString(netLoginQS.toLocal8Bit().toPercentEncoding()),validCode);
 	if(reply) delete reply;
 	reply=netManager->post(netLogin,raw.toLatin1());
-	QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
+    QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
 	connect(reply,SIGNAL(finished()),this,SLOT(loginRequestRespond()));
 }
 /*登网号 请求响应*/
@@ -346,7 +349,7 @@ void NetworkMonitor::vCodeRequest(){
 	if(reply) delete reply;
 	Logger::log("正在获取验证码...");
 	reply=netManager->get(vCodeFetch);
-	QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
+    QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
 	connect(reply,SIGNAL(finished()),this,SLOT(vCodeRequestRespond()));
 }
 /*更新验证码 响应槽*/
@@ -381,8 +384,7 @@ void NetworkMonitor::checkTerminated(QString reason){
 }
 /*检查结束*/
 void NetworkMonitor::checkFinished(){
-	Logger::info("网络连接正常!");
-	ui->freshTime->setText(QDateTime::currentDateTime().addSecs(1200).toString("HH:mm:ss"));
+    Logger::info("网络连接正常!");
 	setTiming(1200);
 	QTimer::singleShot(0,this,SLOT(beat()));
 	ui->freshNow->setEnabled(true);
@@ -421,6 +423,7 @@ void NetworkMonitor::showEthIP(){
 }
 void NetworkMonitor::setTiming(int length){
 	timing=length;
+    updateTime();
 	ui->countBar->setRange(0,length);
 	ui->countBar->setValue(0);
 }

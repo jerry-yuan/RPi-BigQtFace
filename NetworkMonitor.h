@@ -40,6 +40,7 @@ private:
 
 	QNetworkAccessManager* netManager;	//请求管理
 	QNetworkReply* reply;		//响应管理
+    QTimer* replyTimeoutTimer;  //超时单发计时器
 
 	QNetworkRequest vUPC;			//v.upc请求
 	QNetworkRequest netIDInfo;		//获取网号状态

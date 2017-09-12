@@ -68,7 +68,12 @@ void Logger::logout(QString content, LogType type){
  * 单例函数
  */
 Logger* Logger::getInstance(){
-	if(!Logger::threadIns) Logger::threadIns=new Logger();
+    static QMutex insMutex;
+    if(!Logger::threadIns){
+        QMutexLocker locker(&insMutex);
+        if(!Logger::threadIns)
+            Logger::threadIns=new Logger();
+    }
 	return Logger::threadIns;
 }
 

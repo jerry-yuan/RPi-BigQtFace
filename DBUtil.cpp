@@ -1,6 +1,7 @@
 #include "DBUtil.h"
 #include <QSqlDatabase>
 #include <QSqlQuery>
+#include <QMutex>
 DBUtil* DBUtil::instance=0;
 DBUtil::DBUtil(QString dbName)
 {
@@ -10,8 +11,12 @@ DBUtil::DBUtil(QString dbName)
 }
 
 DBUtil* DBUtil::getInstance(){
-	if(DBUtil::instance==NULL)
-        DBUtil::instance=new DBUtil(qApp->applicationDirPath()+"/Face.db");
+    static QMutex insMutex;
+    if(!DBUtil::instance){
+        QMutexLocker insLocker(&insMutex);
+        if(!DBUtil::instance)
+            DBUtil::instance=new DBUtil(qApp->applicationDirPath()+"/Face.db");
+    }
 	return DBUtil::instance;
 }
 

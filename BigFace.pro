@@ -18,7 +18,6 @@ SOURCES += main.cpp\
     weather/WeatherWidget.cpp \
     weather/WindDirectDisplay.cpp \
     Logger.cpp \
-    DBUtil.cpp \
     NetworkSpeed.cpp \
     Clock.cpp \
     SysFuncDialog.cpp \
@@ -32,7 +31,6 @@ HEADERS  += Face.h \
     weather/WeatherWidget.h \
     weather/WindDirectDisplay.h \
     Logger.h \
-    DBUtil.h \
     Consts.h \
     NetworkSpeed.h \
     Clock.h \

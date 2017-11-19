@@ -1,5 +1,4 @@
 #include "Logger.h"
-#include "DBUtil.h"
 #include <QDateTime>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -33,7 +32,7 @@ void Logger::addLogToWidget(log_t log){
 	switch(log.type){
 		case Log:		item->setForeground(QBrush(Qt::black));break;
 		case Info:		item->setForeground(QBrush(Qt::blue));break;
-	case Warning:	item->setForeground(QBrush(Qt::darkYellow));break;
+        case Warning:	item->setForeground(QBrush(Qt::darkYellow));break;
 		case Error:		item->setForeground(QBrush(Qt::red));break;
 	}
 	logList->addItem(item);
@@ -93,23 +92,25 @@ void Logger::addLogToQueue(log_t log){
 	qNotEmpty->wakeAll();
 }
 void Logger::run(){
-	QSqlQuery* sqlHandle;
+    QSqlDatabase db;
+    QSqlQuery sqlHandle(db);
 	log_t temp;
 	while(1){
 		qMutex->lock();
 		if(logQueue->length()<1)
 			qNotEmpty->wait(qMutex);
 		qMutex->unlock();
-		DBUtil::beginTransaction();
-		sqlHandle=DBUtil::getSqlHandle();
+        db.transaction();
+        //DBUtil::beginTransaction();
+        //sqlHandle=DBUtil::getSqlHandle();
 		while(!logQueue->empty()){
 			temp=logQueue->dequeue();
-			sqlHandle->prepare("insert into faceLog (timestamp,content,type) values (?,?,?)");
-			sqlHandle->bindValue(0,QVariant(temp.timestamp));
-			sqlHandle->bindValue(1,temp.content);
-			sqlHandle->bindValue(2,QVariant(temp.type));
-			sqlHandle->exec();
+            sqlHandle.prepare("insert into faceLog (timestamp,content,type) values (?,?,?)");
+            sqlHandle.bindValue(0,QVariant(temp.timestamp));
+            sqlHandle.bindValue(1,temp.content);
+            sqlHandle.bindValue(2,QVariant(temp.type));
+            sqlHandle.exec();
 		}
-		DBUtil::commitTransaction();
+        //DBUtil::commitTransaction();
 	}
 }

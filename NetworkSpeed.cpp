@@ -4,6 +4,9 @@
 #include <QTimer>
 #include <QFile>
 #include <QtMath>
+#include <QRegExp>
+#include <QString>
+#include <QStringList>
 NetworkSpeed::NetworkSpeed(QWidget *parent) :
 	QWidget(parent),
 	ui(new Ui::NetworkSpeed)
@@ -37,14 +40,20 @@ void NetworkSpeed::calcSpeed(){
         return;
     }
     QTextStream in(fp);
-    for(int i=0;i<3;i++) in.readLine();
-    QString eth0=in.readLine();
+    for(int i=0;i<2;i++) in.readLine();
+    QRegExp virtualDev("/^(virbr|br|vnet|tun|tap)[0-9]+/");
+    quint64 newDown=0;
+    quint64 newUp=0;
+    while(!in.atEnd()){
+        QString intf=in.readLine();
+        QStringList fields=intf.split(QRegExp("\\W+"),QString::SkipEmptyParts);
+        if(fields.length()<2) continue;
+        if(fields[0]=="lo"||virtualDev.exactMatch(fields[0])) continue;
+        newDown+=fields[1].toULong();
+        newUp  +=fields[9].toULong();
+    }
 	fp->close();
-	delete fp;
-	QStringList data=eth0.split(" ",QString::SkipEmptyParts);
-	if(data.count()<10) return;
-    quint64 newDown=data.at(1).toULong();
-    quint64 newUp=data.at(9).toULong();
+    delete fp;
     quint32 dDown=newDown-downloaded;
     quint32 dUp=newUp-uploaded;
 	ui->download->setText(bitCountToString(newDown));
@@ -52,7 +61,7 @@ void NetworkSpeed::calcSpeed(){
 	ui->dSpeed->setText(bitCountToString(dDown)+"/S");
 	ui->uSpeed->setText(bitCountToString(dUp)+"/S");
 	downloaded=newDown;
-	uploaded=newUp;
+    uploaded=newUp;
 }
 QString NetworkSpeed::bitCountToString(quint64 sum){
 	int rate=sum>0?qFloor(qLn(sum)/qLn(1024)):0;

@@ -1,7 +1,6 @@
 #include "NetworkMonitor.h"
 #include "ui_NetworkMonitor.h"
 #include "Logger.h"
-#include "DBUtil.h"
 #include "Consts.h"
 
 #include <QJsonDocument>
@@ -28,6 +27,8 @@ NetworkMonitor::NetworkMonitor(QWidget *parent) :
 	sslConfig.setProtocol(QSsl::TlsV1_0);
 	//初始化 内网检测地址(vUPC)
 	vUPC.setUrl(QUrl("http://v.upc.edu.cn"));
+    vUPC.setRawHeader("Accept","text/html");
+    vUPC.setHeader(QNetworkRequest::UserAgentHeader,"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36");
 	//初始化 网号登录状态地址(getUserInfo)
 	netIDInfo.setUrl(QUrl("http://121.251.251.207/eportal/InterFace.do?method=getOnlineUserInfo"));
 	netIDInfo.setHeader(QNetworkRequest::ContentTypeHeader,"application/x-www-form-urlencoded");
@@ -81,12 +82,13 @@ void NetworkMonitor::ethCKRequest(){
 	Logger::log("正在检测校园网连接...");
     if(reply) delete reply;
 	reply=netManager->get(vUPC);
-    QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
+    QTimer::singleShot(NET_WAITING_TIME*2,reply,SLOT(abort()));
     connect(reply,SIGNAL(finished()),this,SLOT(ethCKRequestRespond()));
 }
 /* IP获取&内网检测 响应 */
 void NetworkMonitor::ethCKRequestRespond(){
     reply->blockSignals(true);
+    //qDebug()<<reply->errorString();
     if(reply->error()==QNetworkReply::OperationCanceledError){
 		reply->disconnect();
 		checkTerminated("校园网检测超时!");
@@ -298,20 +300,22 @@ void NetworkMonitor::loginPgChkRequestRespond(){
 		return;
 	}
 	QJsonObject data=QJsonDocument::fromJson(reply->readAll()).object();
-	QString vCodeUrl=data.take("validCodeUrl").toString();
-	if(vCodeUrl.length()<1){
+    QString vCodeUrl=data.value("validCodeUrl").toString();
+    if(!vCodeUrl.isEmpty()){
 		Logger::warning("认证系统请求验证码!");
 		vCodeRequest();
 		return;
-	}
+    }else{
+        Logger::info("认证系统未请求验证码!");
+    }
 	loginRequest();
 }
 
 /*发起 登录网号*/
 void NetworkMonitor::loginRequest(){
     QString raw("operatorPwd=&operatorUserId=&password=%2&queryString=%4&service=%3&userId=%1&validcode=%5");
-    //raw=raw.arg("1409030301","123456Abc","default",QString(netLoginQS.toLocal8Bit().toPercentEncoding()),validCode);
-    raw=raw.arg("1407030207","528204","cmcc",QString(netLoginQS.toLocal8Bit().toPercentEncoding()),validCode);
+    raw=raw.arg("1409030301","123456Abc","cmcc",QString(netLoginQS.toLocal8Bit().toPercentEncoding()),validCode);
+    //raw=raw.arg("1407030207","528204","cmcc",QString(netLoginQS.toLocal8Bit().toPercentEncoding()),validCode);
 	if(reply) delete reply;
 	reply=netManager->post(netLogin,raw.toLatin1());
     QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
@@ -362,12 +366,13 @@ void NetworkMonitor:: vCodeRequestRespond(){
 	}
     QByteArray data=reply->readAll();
 	QString picMD5=QString(QCryptographicHash::hash(data,QCryptographicHash::Md5).toHex());
-	QSqlQuery* sqlHandle=DBUtil::getSqlHandle();
-	sqlHandle->prepare("Select code from vcode where md5=?");
-	sqlHandle->bindValue(0,picMD5);
-	sqlHandle->exec();
-	if(sqlHandle->next()){
-		validCode=sqlHandle->value("code").toString();
+    QSqlDatabase db;
+    QSqlQuery sqlHandle(db);
+    sqlHandle.prepare("Select code from vcode where md5=?");
+    sqlHandle.bindValue(0,picMD5);
+    sqlHandle.exec();
+    if(sqlHandle.next()){
+        validCode=sqlHandle.value("code").toString();
 		Logger::info("验证码:"+validCode);
 		loginRequest();
     }else{

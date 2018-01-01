@@ -61,9 +61,13 @@ NetworkMonitor::NetworkMonitor(QWidget *parent) :
 	showEthIP();
     this->netIdDeadline=QDateTime::fromTime_t(0);
 	//初始化 计时器
-    ui->freshTime->setText(QDateTime::currentDateTime().addSecs(5).toString("HH:mm:ss"));
+    heart=new QTimer(this);
+    //heart->setSingleShot(true);
+    heart->setInterval(500);
+    connect(heart,SIGNAL(timeout()),this,SLOT(beat()));
+    //ui->freshTime->setText(QDateTime::currentDateTime().addSecs(5).toString("HH:mm:ss"));
 	setTiming(5);
-	QTimer::singleShot(0,this,SLOT(beat()));
+    //QTimer::singleShot(0,this,SLOT(beat()));
 	//初始化 按钮
 	connect(ui->freshNow,SIGNAL(clicked()),this,SLOT(refreshImmediately()));
 }
@@ -154,14 +158,15 @@ void NetworkMonitor::idInfRequestRespond(){
         return;
     }
 	Logger::info(QString("网号:%1(%2)").arg(currentId,currentName));
-	QJsonDocument ballInfo=QJsonDocument::fromJson(ballInfoRaw.toString("").toUtf8());
-	QJsonArray balls=ballInfo.array();
-    if(balls.size()>2){
-        QJsonObject flowBall=balls.at(1).toObject();
-        QString bytes=flowBall.value("value").toString("0.0").split(".")[0];
-        ui->netIdFlow->setText(latterFlow(bytes.toULongLong()));
-    }
-    ui->netId->setText(QString("%1(%2)").arg(currentId,currentName));
+//	QJsonDocument ballInfo=QJsonDocument::fromJson(ballInfoRaw.toString("").toUtf8());
+//	QJsonArray balls=ballInfo.array();
+//    if(balls.size()>2){
+//        QJsonObject flowBall=balls.at(1).toObject();
+//        QString bytes=flowBall.value("value").toString("0.0").split(".")[0];
+//        ui->netIdFlow->setText(latterFlow(bytes.toULongLong()));
+//    }
+    ui->netId->setText(currentId);
+    ui->netIdName->setText(currentName);
     //ui->netIdDead->setText(QString("%1%2").arg(netIdDeadline.toString("yyyy-MM-dd"),remainDate));
     aliECSRequest();
 }
@@ -384,25 +389,27 @@ void NetworkMonitor:: vCodeRequestRespond(){
 void NetworkMonitor::checkTerminated(QString reason){
 	if(reason.count()>0) Logger::error(reason);
 	setTiming(20);
-	QTimer::singleShot(0,this,SLOT(beat()));
+    //QTimer::singleShot(0,this,SLOT(beat()));
 	ui->freshNow->setEnabled(true);
 }
 /*检查结束*/
 void NetworkMonitor::checkFinished(){
     Logger::info("网络连接正常!");
-	setTiming(1200);
-	QTimer::singleShot(0,this,SLOT(beat()));
+    setTiming(1200);
+    //QTimer::singleShot(0,this,SLOT(beat()));
 	ui->freshNow->setEnabled(true);
 }
 
 void NetworkMonitor::beat(){
-	timing--;
-	ui->countBar->setValue(timing);
+    timing=QDateTime::currentDateTime().msecsTo(nextFresh);
+    ui->countBar->setValue(timing);
 	//ui->networkTimeCount->setText(QString::number(timing));
-	if(timing<=0)
+    if(timing<=0){
+        heart->stop();
 		this->startCheck();
-	else
-		QTimer::singleShot(1000,this,SLOT(beat()));
+    }/*else{
+        QTimer::singleShot(500,this,SLOT(beat()));
+    }*/
 }
 
 /**
@@ -427,15 +434,20 @@ void NetworkMonitor::showEthIP(){
 	ui->ethIP->setText(EthIP);
 }
 void NetworkMonitor::setTiming(int length){
-	timing=length;
-    updateTime();
-	ui->countBar->setRange(0,length);
+    //timing=length;
+    //updateTime();
+    nextFresh=QDateTime::currentDateTime().addSecs(length);
+    ui->freshTime->setText(nextFresh.toString("HH:mm:ss"));
+    ui->countBar->setRange(0,length*1000);
 	ui->countBar->setValue(0);
+    heart->start();
 }
 void NetworkMonitor::refreshImmediately(){
-	timing=0;
+    nextFresh=QDateTime::currentDateTime();
 	ui->countBar->setValue(0);
-	ui->freshTime->setText(QDateTime::currentDateTime().toString("HH:mm:ss"));
+    ui->freshTime->setText(nextFresh.toString("HH:mm:ss"));
+    heart->stop();
+    this->startCheck();
 }
 void NetworkMonitor::updateTime(){
 	ui->freshTime->setText(QDateTime::currentDateTime().addSecs(timing).toString("HH:mm:ss"));

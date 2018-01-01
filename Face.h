@@ -27,7 +27,6 @@ private slots:
     void goBack();
     void showSysFunc();
 private:
-	EventServer eventServer;
     QPluginLoader* loader;
 	Ui::Face *ui;
 };

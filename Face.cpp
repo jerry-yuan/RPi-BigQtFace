@@ -4,6 +4,7 @@
 #include "SysFuncDialog.h"
 #include "GPIOAdapter.h"
 #include "FuncPanel.h"
+#include "HaltDialog.h"
 
 #include <QFileInfoList>
 #include <QFileInfo>
@@ -23,6 +24,7 @@ Face::Face(QWidget *parent) :
 	ui->setupUi(this);
     this->loader=NULL;
 	Logger::setLogWidget(ui->logWidget);
+    HaltDialog::instance();
 	connect(ui->clock,SIGNAL(timeMutated()),ui->networkMonitor,SLOT(updateTime()));
 
 	connect(ui->container,SIGNAL(currentChanged(int)),this,SLOT(pageChanged(int)));

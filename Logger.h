@@ -27,17 +27,20 @@ public:
 	static void addLogToWidget(log_t log);
 	static void logout(QString content,QString type);
 	static void logout(QString content, LogType type=Log);
-	static Logger* getInstance();
+    static Logger* instance();
     static void clearWidget();
 
 	void addLogToQueue(log_t log);
     void clearLogWidget();
 	QQueue<log_t>* queue();
+public slots:
+    void serverLogout(QVariantHash params);
+    void serverClearLogWidget(QVariantHash);
 protected:
 	void run();
 private:
 	static QListWidget* logList;
-	static Logger* threadIns;
+    static Logger* m_instance;
 	QMutex* qMutex;
 	QWaitCondition* qNotEmpty;
 	QQueue<log_t>* logQueue;

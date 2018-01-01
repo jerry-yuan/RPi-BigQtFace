@@ -13,6 +13,7 @@ void WindDirectDisplay::setDegree(int degree){
 
 void WindDirectDisplay::paintEvent(QPaintEvent *){
 	QPainter painter(this);
+    painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
 	qreal w=this->width();
 	qreal h=this->height();
 	qreal w_2=w/2;

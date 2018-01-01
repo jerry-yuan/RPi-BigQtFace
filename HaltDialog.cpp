@@ -1,10 +1,13 @@
 #include "HaltDialog.h"
 #include "ui_HaltDialog.h"
 #include "GPIOAdapter.h"
+#include "EventServer.h"
 #include <QDebug>
 #include <QProcess>
 #include <QTimer>
-HaltDialog* HaltDialog::instance=NULL;
+#include <QMutex>
+#include <QMutexLocker>
+HaltDialog* HaltDialog::m_instance=NULL;
 
 HaltDialog::HaltDialog(QWidget *parent) :
 	QDialog(parent),
@@ -19,20 +22,40 @@ HaltDialog::HaltDialog(QWidget *parent) :
 	connect(timer,SIGNAL(timeout()),this,SLOT(flushTitle()));
 	connect(ui->cancel,SIGNAL(clicked()),this,SLOT(close()));
 	connect(ui->cancel,SIGNAL(clicked()),timer,SLOT(stop()));
+    EventServer::instance()->addMethod(this,"triggerHalt");
+    EventServer::instance()->addMethod(this,"triggerReboot");
 }
 
 HaltDialog::~HaltDialog(){
 	delete ui;
 	delete timer;
 }
-HaltDialog* HaltDialog::getInstance(){
-	if(HaltDialog::instance==NULL)
-		HaltDialog::instance=new HaltDialog();
-	return HaltDialog::instance;
+HaltDialog* HaltDialog::instance(){
+    static QMutex insMutex;
+    if(!HaltDialog::m_instance){
+        QMutexLocker locker(&insMutex);
+        if(!HaltDialog::m_instance)
+            HaltDialog::m_instance=new HaltDialog();
+    }
+    return HaltDialog::m_instance;
 }
 void HaltDialog::doAction(){
 	if(QProcess::startDetached("sudo "+action))
 		qApp->quit();
+}
+
+void HaltDialog::triggerHalt(QVariantHash params){
+    int delay=params.value("delay").toInt();
+    bool beep=params.value("beep").toBool();
+    if(delay<1) return;
+    this->halt(delay,beep);
+}
+
+void HaltDialog::triggerReboot(QVariantHash params){
+    int delay=params.value("delay").toInt();
+    bool beep=params.value("beep").toBool();
+    if(delay<1) return;
+    this->reboot(delay,beep);
 }
 
 void HaltDialog::flushTitle(){
@@ -54,6 +77,8 @@ void HaltDialog::halt(int delay, bool beep){
 	this->action="halt";
 	this->delay=delay;
 	this->beep=beep;
+    if(beep)
+        GPIOAdapter::beep(2,100);
 	if(this->delay>1){
 		this->flushTitle();
 		timer->start();
@@ -72,6 +97,8 @@ void HaltDialog::reboot(int delay, bool beep){
 	this->action="reboot";
 	this->delay=delay+1;
 	this->beep=beep;
+    if(beep)
+        GPIOAdapter::beep(2,100);
 	if(this->delay>1){
 		this->flushTitle();
 		timer->start();

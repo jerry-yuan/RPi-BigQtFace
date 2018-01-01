@@ -9,13 +9,13 @@
 #include <QThreadPool>
 #include <QMutex>
 #include <QTimer>
-
-Logger* Logger::threadIns=0;
+#include "EventServer.h"
+Logger* Logger::m_instance=0;
 QListWidget* Logger::logList=0;
 void Logger::setLogWidget(QListWidget *logList){
 	Logger::logList=logList;
 	logList->clear();
-	QQueue<log_t>* queue=Logger::getInstance()->queue();
+    QQueue<log_t>* queue=Logger::instance()->queue();
 	if(queue->count()>0)
 		for(int i=0;i<queue->count();i++)
 			addLogToWidget(queue->at(i));
@@ -41,14 +41,23 @@ void Logger::addLogToWidget(log_t log){
 void Logger::clearWidget(){
     logList->clear();
 }
+
+void Logger::serverLogout(QVariantHash params){
+    Logger::logout(params.value("content").toString(),params.value("type").toString());
+}
+
+void Logger::serverClearLogWidget(QVariantHash){
+    Logger::clearWidget();
+}
+
 void Logger::logout(QString content, QString type){
 	QHash<QString,LogType> *logTypeMatching=new QHash<QString,LogType>();
-	logTypeMatching->insert("Info",Info);
-	logTypeMatching->insert("Warning",Warning);
-	logTypeMatching->insert("Error",Error);
-	logTypeMatching->insert("Log",Log);
-	if(logTypeMatching->contains(type))
-		Logger::logout(content,logTypeMatching->value(type));
+    logTypeMatching->insert("info",Info);
+    logTypeMatching->insert("warning",Warning);
+    logTypeMatching->insert("error",Error);
+    logTypeMatching->insert("log",Log);
+    if(logTypeMatching->contains(type.toLower()))
+        Logger::logout(content,logTypeMatching->value(type.toLower()));
 	else
 		Logger::logout(content);
 }
@@ -61,25 +70,28 @@ void Logger::logout(QString content, LogType type){
 	//写屏幕
 	Logger::addLogToWidget(temp);
 	//写数据库
-	Logger::getInstance()->addLogToQueue(temp);
+    Logger::instance()->addLogToQueue(temp);
 }
 /*
  * 单例函数
  */
-Logger* Logger::getInstance(){
+Logger* Logger::instance(){
     static QMutex insMutex;
-    if(!Logger::threadIns){
+    if(!Logger::m_instance){
         QMutexLocker locker(&insMutex);
-        if(!Logger::threadIns)
-            Logger::threadIns=new Logger();
+        if(!Logger::m_instance)
+            Logger::m_instance=new Logger();
     }
-	return Logger::threadIns;
+    return Logger::m_instance;
 }
 
 /*
  * 线程函数
 */
 Logger::Logger(){
+    //初始化方法
+    EventServer::instance()->addMethod(this,"logout","serverLogout");
+    EventServer::instance()->addMethod(this,"clearLogWidget","serverClearLogWidget");
 	//初始化线程
 	qMutex=new QMutex();
 	qNotEmpty=new QWaitCondition();

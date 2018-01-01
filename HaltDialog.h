@@ -2,7 +2,7 @@
 #define HALTDIALOG_H
 
 #include <QDialog>
-
+#include <QVariantHash>
 namespace Ui {
 	class HaltDialog;
 	}
@@ -12,15 +12,17 @@ class HaltDialog : public QDialog{
 public:
 	explicit HaltDialog(QWidget *parent = 0);
 	~HaltDialog();
-	static HaltDialog* getInstance();
+    static HaltDialog* instance();
 public slots:
 	void halt(int delay=60,bool beep=false);
-	void reboot(int delay=60,bool beep=false);
+    void reboot(int delay=60,bool beep=false);
+    void triggerHalt(QVariantHash params);
+    void triggerReboot(QVariantHash params);
 private slots:
 	void flushTitle();
 	void doAction();
 private:
-	static HaltDialog* instance;
+    static HaltDialog* m_instance;
 	bool beep;
 	QString action;
 	int delay;

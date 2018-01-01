@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>251</width>
-    <height>231</height>
+    <height>233</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -183,7 +183,7 @@
           </font>
          </property>
          <property name="text">
-          <string>1409030301(袁晓晨)</string>
+          <string>1409030301</string>
          </property>
         </widget>
        </item>
@@ -197,12 +197,12 @@
           </font>
          </property>
          <property name="text">
-          <string>流  量:</string>
+          <string>姓  名:</string>
          </property>
         </widget>
        </item>
        <item row="1" column="1">
-        <widget class="QLabel" name="netIdFlow">
+        <widget class="QLabel" name="netIdName">
          <property name="font">
           <font>
            <family>YaHei Consolas Hybrid</family>
@@ -211,7 +211,7 @@
           </font>
          </property>
          <property name="text">
-          <string>2017-12-12[25天]</string>
+          <string>袁晓晨</string>
          </property>
         </widget>
        </item>

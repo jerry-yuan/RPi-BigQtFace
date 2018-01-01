@@ -37,6 +37,8 @@ private:
 	Ui::NetworkMonitor *ui;
 
 	int timing;
+    QDateTime nextFresh;
+    QTimer* heart;                  //心跳
 
 	QNetworkAccessManager* netManager;	//请求管理
 	QNetworkReply* reply;		//响应管理

@@ -34,14 +34,14 @@ SysFuncDialog::SysFuncDialog(QWidget *parent) :
 
 	connect(ui->exit,SIGNAL(clicked()),qApp,SLOT(quit()));
 
-	connect(ui->backlightSlider,SIGNAL(valueChanged(int)),GPIOAdapter::getInstance(),SLOT(setLCDBrightness(int)));
+    connect(ui->backlightSlider,SIGNAL(valueChanged(int)),GPIOAdapter::instance(),SLOT(setLCDBrightness(int)));
 	connect(ui->backlightSlider,SIGNAL(valueChanged(int)),this,SLOT(resetTimer()));
 	connect(ui->backlightSlider,SIGNAL(sliderPressed()),this,SLOT(resetTimer()));
 
-	connect(GPIOAdapter::getInstance(),SIGNAL(LCDBrightnessReturned(int)),ui->backlightSlider,SLOT(setValue(int)));
-	connect(GPIOAdapter::getInstance(),SIGNAL(LCDBrightnessReturned(int)),this,SLOT(brightnessLoaded()));
+    connect(GPIOAdapter::instance(),SIGNAL(LCDBrightnessReturned(int)),ui->backlightSlider,SLOT(setValue(int)));
+    connect(GPIOAdapter::instance(),SIGNAL(LCDBrightnessReturned(int)),this,SLOT(brightnessLoaded()));
 
-	GPIOAdapter::getInstance()->getLCDBrightness();
+    GPIOAdapter::instance()->getLCDBrightness();
 
 	ui->backlightSlider->installEventFilter(this);
 
@@ -56,11 +56,11 @@ SysFuncDialog::~SysFuncDialog(){
 }
 
 void SysFuncDialog::halt(){
-	HaltDialog::getInstance()->halt(10);
+    HaltDialog::instance()->halt(10);
 }
 
 void SysFuncDialog::reboot(){
-	HaltDialog::getInstance()->reboot(10);
+    HaltDialog::instance()->reboot(10);
 }
 void SysFuncDialog::flushCounter(){
 	count--;

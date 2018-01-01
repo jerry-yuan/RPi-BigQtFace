@@ -8,7 +8,7 @@ class GPIOAdapter : public QObject
 	Q_OBJECT
 public:
 	explicit GPIOAdapter(QObject *parent = 0);
-	static GPIOAdapter* getInstance();
+    static GPIOAdapter* instance();
 	static void beep(int times=3, int interval=100);
 	void sendList(QJsonArray &l);
 signals:
@@ -18,10 +18,11 @@ public slots:
 	void getLCDBrightness();
 private slots:
 	void msgReceived();
+    void doBeep(QVariantHash params);
 private:
 	void send(const QJsonObject &data);
 	void parseEvent(const QJsonObject &event);
-	static GPIOAdapter* instance;
+    static GPIOAdapter* m_instance;
 	QLocalSocket* client;
 };
 

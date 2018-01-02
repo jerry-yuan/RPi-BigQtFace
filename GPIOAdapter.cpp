@@ -6,6 +6,7 @@
 #include <QMutex>
 #include <QMutexLocker>
 #include "EventServer.h"
+#include "Logger.h"
 GPIOAdapter* GPIOAdapter::m_instance=NULL;
 
 GPIOAdapter* GPIOAdapter::instance(){
@@ -20,8 +21,8 @@ GPIOAdapter* GPIOAdapter::instance(){
 GPIOAdapter::GPIOAdapter(QObject *parent) : QObject(parent){
 	client=new QLocalSocket(this);
 	client->setServerName("/tmp/GPIOServer");
-	client->connectToServer();
-	client->waitForConnected();
+    //client->connectToServer();
+    //client->waitForConnected();
 	connect(client,SIGNAL(readyRead()),this,SLOT(msgReceived()));
 
     EventServer::instance()->addMethod(this,"beep","doBeep");
@@ -98,10 +99,15 @@ void GPIOAdapter::setLCDBrightness(int brightness){
 	send(data);
 }
 void GPIOAdapter::send(const QJsonObject &data){
-	if(!client->isOpen())
+    int trys=5;
+    while(trys-->0&&!client->isOpen()){
 		client->connectToServer();
-    qDebug()<<data;
-	client->write(QJsonDocument(data).toJson(QJsonDocument::Compact));
+        client->waitForConnected();
+    }
+    if(client->isOpen())
+        client->write(QJsonDocument(data).toJson(QJsonDocument::Compact));
+    else
+        Logger::error("[GA]连接GPIOServer失败!");
 }
 void GPIOAdapter::msgReceived(){
 	QJsonObject event=QJsonDocument::fromJson(client->readAll()).object();

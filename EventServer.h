@@ -18,9 +18,10 @@ public:
 signals:
 
 public slots:
+    void logout(QVariantHash params);
 private slots:
 	void newConnection();
-	void eventReceived();
+    void eventReceived();
 private:
     struct InvokeObject{
         QObject* target;

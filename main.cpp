@@ -10,10 +10,9 @@ int main(int argc, char *argv[])
     QSqlDatabase defaultDatabase=QSqlDatabase::addDatabase("QSQLITE");
     defaultDatabase.setDatabaseName(qApp->applicationDirPath()+"/Face.db");
     defaultDatabase.open();
+    Logger::info("程序启动正常");
     //Instance EventServer
     EventServer::instance();
-    //Instance Logger
-    Logger::instance();
     //Instance GPIOAdapter
     GPIOAdapter::instance();
     //Instance Face

@@ -8,7 +8,7 @@
 #include <QWaitCondition>
 #include <QMutex>
 
-enum LogType{Log=0,Info=1,Warning=2,Error=3};
+enum LogType{Fresh=-1,Log=0,Info=1,Warning=2,Error=3};
 typedef struct{
 	uint timestamp;
 	QString content;
@@ -28,14 +28,12 @@ public:
 	static void logout(QString content,QString type);
 	static void logout(QString content, LogType type=Log);
     static Logger* instance();
-    static void clearWidget();
 
 	void addLogToQueue(log_t log);
-    void clearLogWidget();
+
 	QQueue<log_t>* queue();
 public slots:
-    void serverLogout(QVariantHash params);
-    void serverClearLogWidget(QVariantHash);
+    void clearLogWidget(QVariantHash=QVariantHash());
 protected:
 	void run();
 private:

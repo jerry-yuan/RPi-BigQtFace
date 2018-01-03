@@ -43,7 +43,8 @@ EventServer::EventServer(QObject *parent) : QObject(parent){
 	if(QFile("/tmp/FaceEvent").exists())
 		server->removeServer("/tmp/FaceEvent");
 	server->listen("/tmp/FaceEvent");
-	QFile("/tmp/FaceEvent").setPermissions((QFile::Permission)0x0777);
+    QFile("/tmp/FaceEvent").setPermissions((QFile::Permission)0x0777);
+    EventServer::addMethod(this,"logout");
 }
 EventServer::~EventServer(){
 	server->close();
@@ -74,4 +75,8 @@ void EventServer::eventReceived(){
     }else{
         Logger::warning("未知的远程命令:"+eventName);
     }
+}
+
+void EventServer::logout(QVariantHash params){
+    Logger::logout(params.value("content").toString(),params.value("type").toString());
 }

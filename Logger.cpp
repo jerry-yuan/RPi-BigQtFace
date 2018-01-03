@@ -15,40 +15,41 @@ QListWidget* Logger::logList=0;
 void Logger::setLogWidget(QListWidget *logList){
 	Logger::logList=logList;
 	logList->clear();
-    QQueue<log_t>* queue=Logger::instance()->queue();
-	if(queue->count()>0)
-		for(int i=0;i<queue->count();i++)
-			addLogToWidget(queue->at(i));
+    log_t t;
+    t.type=Fresh;
+    Logger::addLogToWidget(t);
+    //挂载清空
+    EventServer::instance()->addMethod(Logger::instance(),"clearLogWidget");
 }
 QQueue<log_t> *Logger::queue(){
 	return this->logQueue;
 }
 
 void Logger::addLogToWidget(log_t log){
+    static QQueue<log_t> widgetCache;
+    if(log.type!=Fresh)
+        widgetCache.enqueue(log);
 	if(Logger::logList==NULL) return;
-	QString LogContent=QDateTime::fromTime_t(log.timestamp).toString("[hh:mm:ss]")+log.content;
-	QListWidgetItem* item=new QListWidgetItem();
-	item->setText(LogContent);
-	switch(log.type){
-		case Log:		item->setForeground(QBrush(Qt::black));break;
-		case Info:		item->setForeground(QBrush(Qt::blue));break;
-        case Warning:	item->setForeground(QBrush(Qt::darkYellow));break;
-		case Error:		item->setForeground(QBrush(Qt::red));break;
-	}
-	logList->addItem(item);
-	logList->scrollToBottom();
+    while(!widgetCache.empty()){
+        log=widgetCache.dequeue();
+        QString LogContent=QDateTime::fromTime_t(log.timestamp).toString("[hh:mm:ss]")+log.content;
+        QListWidgetItem* item=new QListWidgetItem();
+        item->setText(LogContent);
+        switch(log.type){
+            case Log:		item->setForeground(QBrush(Qt::black));break;
+            case Info:		item->setForeground(QBrush(Qt::blue));break;
+            case Warning:	item->setForeground(QBrush(Qt::darkYellow));break;
+            case Error:		item->setForeground(QBrush(Qt::red));break;
+            default:break;
+        }
+        logList->addItem(item);
+        logList->scrollToBottom();
+    }
 }
-void Logger::clearWidget(){
+void Logger::clearLogWidget(QVariantHash){
     logList->clear();
 }
 
-void Logger::serverLogout(QVariantHash params){
-    Logger::logout(params.value("content").toString(),params.value("type").toString());
-}
-
-void Logger::serverClearLogWidget(QVariantHash){
-    Logger::clearWidget();
-}
 
 void Logger::logout(QString content, QString type){
 	QHash<QString,LogType> *logTypeMatching=new QHash<QString,LogType>();
@@ -89,9 +90,6 @@ Logger* Logger::instance(){
  * 线程函数
 */
 Logger::Logger(){
-    //初始化方法
-    EventServer::instance()->addMethod(this,"logout","serverLogout");
-    EventServer::instance()->addMethod(this,"clearLogWidget","serverClearLogWidget");
 	//初始化线程
 	qMutex=new QMutex();
 	qNotEmpty=new QWaitCondition();

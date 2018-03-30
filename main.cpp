@@ -1,6 +1,7 @@
 #include "Face.h"
 #include "Logger.h"
 #include "GPIOAdapter.h"
+#include "WebsocketServer.h"
 #include <QApplication>
 #include <QSqlDatabase>
 int main(int argc, char *argv[])
@@ -13,6 +14,8 @@ int main(int argc, char *argv[])
     Logger::info("程序启动正常");
     //Instance EventServer
     EventServer::instance();
+    //Instance WebSocket Server
+    WebsocketServer::instance();
     //Instance GPIOAdapter
     GPIOAdapter::instance();
     //Instance Face

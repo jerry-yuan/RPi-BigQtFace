@@ -7,6 +7,7 @@
 #include <QTimer>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QtMath>
 HaltDialog* HaltDialog::m_instance=NULL;
 
 HaltDialog::HaltDialog(QWidget *parent) :
@@ -59,8 +60,8 @@ void HaltDialog::triggerReboot(QVariantHash params){
 }
 
 void HaltDialog::flushTitle(){
-	delay--;
-	ui->title->setText(QString("系统将于%1秒后%2!").arg(QString::number(delay),map.value(action)));
+    this->delay=qMax<quint64>(QDateTime::currentDateTime().secsTo(this->triggerTime),0);
+    ui->title->setText(QString("系统将于%1秒后%2!").arg(delay).arg(map.value(action)));
 	if(delay<=0){
 		timer->stop();
 		if(beep){
@@ -75,7 +76,7 @@ void HaltDialog::flushTitle(){
 }
 void HaltDialog::halt(int delay, bool beep){
 	this->action="halt";
-	this->delay=delay;
+    this->triggerTime=QDateTime::currentDateTime().addSecs(delay);
 	this->beep=beep;
     if(beep)
         GPIOAdapter::beep(2,100);
@@ -95,8 +96,8 @@ void HaltDialog::halt(int delay, bool beep){
 
 void HaltDialog::reboot(int delay, bool beep){
 	this->action="reboot";
-	this->delay=delay+1;
-	this->beep=beep;
+    this->triggerTime=QDateTime::currentDateTime().addSecs(delay);
+    this->beep=beep;
     if(beep)
         GPIOAdapter::beep(2,100);
 	if(this->delay>1){

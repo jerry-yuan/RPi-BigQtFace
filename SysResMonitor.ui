@@ -53,6 +53,32 @@
      </property>
     </spacer>
    </item>
+   <item>
+    <widget class="QLabel" name="label_2">
+     <property name="font">
+      <font>
+       <family>YaHei Consolas Hybrid</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>WS:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="WS">
+     <property name="font">
+      <font>
+       <family>YaHei Consolas Hybrid</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>0</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <resources/>

@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QVariantHash>
+#include <QDateTime>
 namespace Ui {
 	class HaltDialog;
 	}
@@ -25,6 +26,7 @@ private:
     static HaltDialog* m_instance;
 	bool beep;
 	QString action;
+    QDateTime triggerTime;
 	int delay;
 	QHash<QString,QString> map;
 	QTimer* timer;

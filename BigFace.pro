@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui sql network
+QT       += core gui sql network websockets
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -24,7 +24,8 @@ SOURCES += main.cpp\
     HaltDialog.cpp \
     EventServer.cpp \
     GPIOAdapter.cpp \
-    SysResMonitor.cpp
+    SysResMonitor.cpp \
+    WebsocketServer.cpp
 
 HEADERS  += Face.h \
     NetworkMonitor.h \
@@ -39,7 +40,8 @@ HEADERS  += Face.h \
     EventServer.h \
     GPIOAdapter.h \
     FuncPanel.h \
-    SysResMonitor.h
+    SysResMonitor.h \
+    WebsocketServer.h
 
 FORMS    += Face.ui \
     NetworkMonitor.ui \

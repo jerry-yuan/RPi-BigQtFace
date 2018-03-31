@@ -3,6 +3,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QJsonParseError>
 #include <QMetaObject>
 #include <QMetaMethod>
 #include <QMutex>
@@ -56,40 +57,57 @@ void WebsocketServer::newClientConnected(){
 }
 void WebsocketServer::messageReceived(QString text){
     QWebSocket* client=qobject_cast<QWebSocket*>(sender());
-    QJsonObject recvObj=QJsonDocument::fromJson(text.toUtf8()).object();
+    QJsonParseError parseError;
+    QJsonObject recvObj=QJsonDocument::fromJson(text.toUtf8(),&parseError).object();
+    QJsonObject respObj;
+    if(parseError.error!=QJsonParseError::NoError){
+        respObj.insert("status",false);
+        respObj.insert("error",QString("ParseError:%1").arg(parseError.errorString()));
+    }else{
+        respObj=this->invokeMethod(recvObj);
+    }
+    respObj.insert("type","response");
+    client->sendTextMessage(QJsonDocument(respObj).toJson(QJsonDocument::Compact));
+}
+QJsonObject WebsocketServer::invokeMethod(QJsonObject reqObj){
     QJsonObject retnObj;
-    if(recvObj.contains("id")) retnObj.insert("id",recvObj.value("id"));
-    QStringList cmdList=recvObj.value("method").toString().split('.');
+    if(reqObj.contains("id")) retnObj.insert("id",reqObj.value("id"));
+    QStringList cmdList=reqObj.value("method").toString().split('.');
     if(cmdList.length()<2){
         retnObj.insert("status",false);
-        retnObj.insert("error",QString("Invalid object.method was called in method:%1").arg(recvObj.value("method").toString()));
+        retnObj.insert("error",QString("Invalid object.method was called in method:%1").arg(reqObj.value("method").toString()));
     }else if(!objMap.contains(cmdList[0])){
         retnObj.insert("status",false);
         retnObj.insert("error",QString("Cannot find object:%1").arg(cmdList[0]));
     }else{
         QObject* host=objMap.value(cmdList[0]);
         const QMetaObject* metaObj=host->metaObject();
-        bool hasParams=recvObj.contains("params");
-        QString methodName=QString("%1(%2)").arg(cmdList[1]).arg(hasParams?"QVariantMap":"");
+        /**
+         * @brief hasParams
+         * 有params参数,并且params参数不是空(Array非空和Object非空)
+         */
+        bool hasParams=reqObj.contains("params")&&!(reqObj.value("params").type()==QJsonValue::Array?reqObj.value("params").toArray().isEmpty():reqObj.value("params").toObject().isEmpty());
+        QString methodName=QString("%1(%2)").arg(cmdList[1]).arg(hasParams?"QJsonValue":"");
         int methodIndex=metaObj->indexOfMethod(methodName.toStdString().c_str());
         if(methodIndex>0){
             QJsonValue ret;
             QMetaMethod method=metaObj->method(methodIndex);
             bool status=false;
             if(hasParams)
-                status=method.invoke(host,Q_RETURN_ARG(QJsonValue,ret),Q_ARG(QVariant,recvObj.value("params").toVariant()));
+                status=method.invoke(host,Q_RETURN_ARG(QJsonValue,ret),Q_ARG(QJsonValue,reqObj.value("params")));
             else
                 status=method.invoke(host,Q_RETURN_ARG(QJsonValue,ret),QGenericArgument());
             retnObj.insert("status",status);
-            if(!status) retnObj.insert("error","Cannot Invoke the method!");
+            if(!status) retnObj.insert("error","Failed to invoke the method!");
             retnObj.insert("return",ret);
         }else{
             retnObj.insert("status","false");
-            retnObj.insert("error",QString("Cannot Find method %1").arg(recvObj.value("method").toString()));
+            retnObj.insert("error",QString("Cannot Find method %1").arg(reqObj.value("method").toString()));
         }
     }
-    client->sendTextMessage(QJsonDocument(retnObj).toJson(QJsonDocument::Compact));
+    return retnObj;
 }
+
 void WebsocketServer::clientDisconnected(){
     QWebSocket* client=qobject_cast<QWebSocket*>(sender());
     clients.removeAt(clients.indexOf(client));
@@ -106,4 +124,12 @@ QJsonValue WebsocketServer::getAvaliableMethods(){
         }
     }
     return retn;
+}
+QJsonValue WebsocketServer::multiCall(QJsonValue params){
+    QJsonArray recvQueue=params.toArray();
+    QJsonArray respQueue;
+    foreach(QJsonValue item,recvQueue){
+        respQueue.append(this->invokeMethod(item.toObject()));
+    }
+    return respQueue;
 }

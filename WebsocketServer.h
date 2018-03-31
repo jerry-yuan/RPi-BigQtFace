@@ -14,6 +14,7 @@ public:
     bool registerObject(QString name,QObject* obj);
     bool unregisterObject(QString name);
     Q_INVOKABLE QJsonValue getAvaliableMethods();
+    Q_INVOKABLE QJsonValue multiCall(QJsonValue params);
 signals:
     void activeClientsChanged(int);
 private slots:
@@ -21,6 +22,7 @@ private slots:
     void messageReceived(QString text);
     void clientDisconnected();
 private:
+    QJsonObject invokeMethod(QJsonObject reqObj);
     static WebsocketServer* m_instance;
     QList<QWebSocket*> clients;
     QMap<QString,QObject*> objMap;

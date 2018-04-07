@@ -7,6 +7,10 @@
 #include <QTimer>
 class WebsocketServer : public QWebSocketServer{
     Q_OBJECT
+    struct WSSession{
+        QDateTime actTime;  //上次活动时间
+    };
+    enum MsgType{Request,Response,Error};
 public:
     WebsocketServer(QObject* parent=0);
     ~WebsocketServer();
@@ -17,6 +21,8 @@ public:
     Q_INVOKABLE QJsonValue multiCall(QJsonValue params);
 signals:
     void activeClientsChanged(int);
+public slots:
+    void dropDiedSession();
 private slots:
     void newClientConnected();
     void messageReceived(QString text);
@@ -24,7 +30,8 @@ private slots:
 private:
     QJsonObject invokeMethod(QJsonObject reqObj);
     static WebsocketServer* m_instance;
-    QList<QWebSocket*> clients;
+    QTimer *timer;
+    QMap<QWebSocket*,WSSession> clients;
     QMap<QString,QObject*> objMap;
 };
 

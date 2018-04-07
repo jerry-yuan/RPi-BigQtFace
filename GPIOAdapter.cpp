@@ -7,6 +7,7 @@
 #include <QMutexLocker>
 #include "EventServer.h"
 #include "Logger.h"
+#include "WebsocketServer.h"
 GPIOAdapter* GPIOAdapter::m_instance=NULL;
 
 GPIOAdapter* GPIOAdapter::instance(){
@@ -24,8 +25,9 @@ GPIOAdapter::GPIOAdapter(QObject *parent) : QObject(parent){
     //client->connectToServer();
     //client->waitForConnected();
 	connect(client,SIGNAL(readyRead()),this,SLOT(msgReceived()));
-
+    WebsocketServer::instance()->registerObject("GPIOAdapter",this);
     EventServer::instance()->addMethod(this,"beep","doBeep");
+
 }
 void GPIOAdapter::doBeep(QVariantHash params){
     int times=params.value("times").toInt();

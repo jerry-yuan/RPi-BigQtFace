@@ -112,30 +112,6 @@ QJsonValue SysResMonitor::getCoreInfo(){
     fp->close();
     data.insert("uptime",QString(str.split(" ")[0]).toDouble());
     delete fp;
-    //CPU频率
-    QJsonObject cpuRates;
-    //当前频率
-    fp=new QFile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq");
-    fp->open(QIODevice::ReadOnly);
-    str=QString(fp->readAll());
-    fp->close();
-    cpuRates.insert("current",QString(str.split(" ")[0]).toDouble());
-    delete fp;
-    //最高频率
-    fp=new QFile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq");
-    fp->open(QIODevice::ReadOnly);
-    str=QString(fp->readAll());
-    fp->close();
-    cpuRates.insert("max",QString(str.split(" ")[0]).toDouble());
-    delete fp;
-    //最高频率
-    fp=new QFile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq");
-    fp->open(QIODevice::ReadOnly);
-    str=QString(fp->readAll());
-    fp->close();
-    cpuRates.insert("min",QString(str.split(" ")[0]).toDouble());
-    delete fp;
-    data.insert("cpuRates",cpuRates);
     //return
     return data;
 }
@@ -162,6 +138,30 @@ QJsonValue SysResMonitor::getSysRes(){
     cpuLoad.insert("load5",load[1]);
     cpuLoad.insert("load15",load[2]);
     cpuData.insert("load",cpuLoad);
+    //CPU频率
+    QJsonObject cpuRates;
+    //当前频率
+    fp=new QFile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq");
+    fp->open(QIODevice::ReadOnly);
+    str=QString(fp->readAll());
+    fp->close();
+    cpuRates.insert("current",QString(str.split(" ")[0]).toDouble());
+    delete fp;
+    //最高频率
+    fp=new QFile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq");
+    fp->open(QIODevice::ReadOnly);
+    str=QString(fp->readAll());
+    fp->close();
+    cpuRates.insert("max",QString(str.split(" ")[0]).toDouble());
+    delete fp;
+    //最低频率
+    fp=new QFile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq");
+    fp->open(QIODevice::ReadOnly);
+    str=QString(fp->readAll());
+    fp->close();
+    cpuRates.insert("min",QString(str.split(" ")[0]).toDouble());
+    delete fp;
+    cpuData.insert("cpuRates",cpuRates);
     retn.insert("cpu",cpuData);
     //内存
     QJsonObject memData;

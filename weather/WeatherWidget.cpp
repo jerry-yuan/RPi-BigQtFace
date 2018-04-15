@@ -101,7 +101,7 @@ void WeatherWidget::cCReceived(){
 	disconnect(cCReply,SIGNAL(readyRead()),this,SLOT(cCReceived()));
 	if(cCReply->error()==QNetworkReply::OperationCanceledError){
 		if(!networkStatus) return;
-		Logger::error("拉取当前天气超时...");
+        qCritical()<<"拉取当前天气超时...";
 		if(cCRetried++<5)
 			QTimer::singleShot(5000,this,SLOT(flushCurrentCondition()));
 	}
@@ -110,7 +110,7 @@ void WeatherWidget::cCReceived(){
 		if(networkStatus){
 			networkStatus=false;
 			emit networkFailed();
-			Logger::warning("疑似网络异常!");
+            qWarning()<<"疑似网络异常!";
 		}
 		return;
 	}
@@ -131,14 +131,14 @@ void WeatherWidget::f24hReceived(){
 	ui->f24hFresh->setEnabled(true);;
 	if(f24hReply->error()==QNetworkReply::OperationCanceledError){
 		if(!networkStatus) return;
-		Logger::error("拉取24小时预报超时...");
+        qCritical()<<"拉取24小时预报超时...";
 		if(f24hRetried++<5)
 			QTimer::singleShot(5000,this,SLOT(flushForecast24h()));
 	}else if(f24hReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()!=200){
 		if(networkStatus){
 			networkStatus=false;
 			emit networkFailed();
-			Logger::warning("疑似网络异常!");
+            qWarning()<<"疑似网络异常!";
 		}
 		return;
 	}
@@ -159,14 +159,14 @@ void WeatherWidget::f4dReceived(){
 	disconnect(f4dReply,SIGNAL(finished()),this,SLOT(f4dReceived()));
 	if(f4dReply->error()==QNetworkReply::OperationCanceledError){
 		if(!networkStatus) return;
-		Logger::error("拉取24小时预报超时...");
+        qCritical()<<"拉取24小时预报超时...";
 		if(f4dRetried++<5)
 			QTimer::singleShot(5000,this,SLOT(flushForecast4d()));
 	}else if(f4dReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()!=200){
 		if(networkStatus){
 			networkStatus=false;
 			emit networkFailed();
-			Logger::warning("疑似网络异常!");
+            qWarning()<<"疑似网络异常!";
 		}
 		return;
 	}
@@ -197,14 +197,14 @@ void WeatherWidget::airReceived(){
 	disconnect(airReply,SIGNAL(finished()),this,SLOT(airReceived()));
 	if(airReply->error()==QNetworkReply::OperationCanceledError){
 		if(!networkStatus) return;
-		Logger::error("拉取24小时预报超时...");
+        qCritical()<<"拉取24小时预报超时...";
 		if(airRetried++<5)
 			QTimer::singleShot(5000,this,SLOT(flushAir()));
 	}else if(airReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()!=200){
 		if(networkStatus){
 			networkStatus=false;
 			emit networkFailed();
-			Logger::warning("疑似网络异常!");
+            qWarning()<<"疑似网络异常!";
 		}
 		return;
 	}

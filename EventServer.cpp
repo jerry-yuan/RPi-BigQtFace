@@ -28,7 +28,7 @@ void EventServer::addMethod(QObject *receiver, const QString actName,const QStri
     const QMetaObject* mObjects=receiver->metaObject();
     int methodId=mObjects->indexOfMethod(tMethodName.toStdString().c_str());
     if(methodId<0){
-        Logger::error(QString("[ES]没有在%1中找到方法%2").arg(mObjects->className(),tMethodName));
+        qCritical()<<QString("[ES]没有在%1中找到方法%2").arg(mObjects->className(),tMethodName);
         return;
     }
     InvokeObject t;
@@ -73,10 +73,10 @@ void EventServer::eventReceived(){
         InvokeObject t=methods.value(eventName);
         t.method.invoke(t.target,Q_ARG(QVariantHash,params));
     }else{
-        Logger::warning("未知的远程命令:"+eventName);
+        qWarning("未知的远程命令:%s",qPrintable(eventName));
     }
 }
 
 void EventServer::logout(QVariantHash params){
-    Logger::logout(params.value("content").toString(),params.value("type").toString());
+    qDebug()<<qPrintable(params.value("content").toString());
 }

@@ -66,7 +66,7 @@ NetworkMonitor::NetworkMonitor(QWidget *parent) :
     heart->setInterval(500);
     connect(heart,SIGNAL(timeout()),this,SLOT(beat()));
     //ui->freshTime->setText(QDateTime::currentDateTime().addSecs(5).toString("HH:mm:ss"));
-	setTiming(5);
+    setTiming(5);
     //QTimer::singleShot(0,this,SLOT(beat()));
 	//初始化 按钮
 	connect(ui->freshNow,SIGNAL(clicked()),this,SLOT(refreshImmediately()));
@@ -83,7 +83,7 @@ void NetworkMonitor::startCheck(){
 }
 /*发起 IP获取&内网检测*/
 void NetworkMonitor::ethCKRequest(){
-	Logger::log("正在检测校园网连接...");
+    qDebug()<<"正在检测校园网连接...";
     if(reply) delete reply;
 	reply=netManager->get(vUPC);
     QTimer::singleShot(NET_WAITING_TIME*2,reply,SLOT(abort()));
@@ -112,12 +112,12 @@ void NetworkMonitor::ethCKRequestRespond(){
 	if(IPS.count()<=0)
 		return checkTerminated("查询公网IP失败!");
 	ui->intIP->setText(IPS[IPS.count()-1]);
-	Logger::info("校园网连接正常!");
+    qInfo()<<"校园网连接正常!";
     idInfRequest();
 }
 /*发起 检查网号登录状态*/
 void NetworkMonitor::idInfRequest(){
-	Logger::log("正在拉取网号状态...");
+    qDebug()<<"正在拉取网号状态...";
 	if(reply) delete reply;
 	reply=netManager->post(netIDInfo,QByteArray("userIndex="));
     QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
@@ -133,7 +133,7 @@ void NetworkMonitor::idInfRequestRespond(){
 		checkTerminated("拉取网号状态数据超时!");
 		return;
 	}
-	if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()!=200){
+    if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()!=200){
         ui->netId->setText("[通信失败]");
         //ui->netIdDead->setText("[通信失败]");
         checkTerminated(QString("认证服务器返回异常(%1)!").arg(QString::number(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt())));
@@ -146,18 +146,18 @@ void NetworkMonitor::idInfRequestRespond(){
 	QJsonValue ballInfoRaw=stat.value("ballInfo");
 	if(userId.isNull()){
         ui->netId->setText("[未登录网号]");
-		Logger::warning("未登网号,尝试登录网号!");
+        qWarning()<<"未登网号,尝试登录网号!";
 		loginPreRequest();
 		return;
 	}
 	currentId=userId.toString("解析失败");
 	currentName=userName.toString("解析失败");
     if(currentId==currentName&&currentId!="解析失败"){
-        Logger::log("重新获取网号信息...");
+        qDebug()<<"重新获取网号信息...";
         idInfRequest();
         return;
     }
-	Logger::info(QString("网号:%1(%2)").arg(currentId,currentName));
+    qInfo()<<qPrintable(QString("网号:%1(%2)").arg(currentId,currentName));
 //	QJsonDocument ballInfo=QJsonDocument::fromJson(ballInfoRaw.toString("").toUtf8());
 //	QJsonArray balls=ballInfo.array();
 //    if(balls.size()>2){
@@ -172,7 +172,7 @@ void NetworkMonitor::idInfRequestRespond(){
 }
 /* 发起 阿里云转储请求*/
 void NetworkMonitor::aliECSRequest(){
-	Logger::log("正在更新阿里云状态...");
+    qDebug()<<"正在更新阿里云状态...";
 	if(reply) delete reply;
 	QString raw("TG=Raspi&IP=%1&timestamp=%2&Life=1200");
 	raw=raw.arg(ui->intIP->text(),QString::number(QDateTime::currentDateTime().toTime_t()));
@@ -192,12 +192,12 @@ void NetworkMonitor::aliECSRequestRespond(){
 		checkTerminated("公网异常稍后重试!");
 		return;
 	}
-	Logger::info("阿里云已经更新!");
+    qInfo()<<"阿里云已经更新!";
 	dnsCKRequest();
 }
 /*发起 DNS检查*/
 void NetworkMonitor::dnsCKRequest(){
-	Logger::log("正在检查DNS数据...");
+    qDebug()<<"正在检查DNS数据...";
 	QByteArray data("login_token=19255,ed8e437c6e7a30b57a60aa1e787b9940&format=json&domain=jerryhome.tk&record_id=195272416");
 	if(reply) delete reply;
     reply=netManager->post(DNSReader,data);
@@ -219,10 +219,10 @@ void NetworkMonitor::dnsCKRequestRespond(){
 	if(QJDom.object().take("status").toObject().take("code").toString().toInt()!=1)
 		checkTerminated("检查DNS时发生鉴权错误!");
 	else if(QJDom.object().take("record").toObject().take("value").toString()!=ui->intIP->text()){
-		Logger::warning("DNS信息过期!");
+        qWarning()<<"DNS信息过期!";
 		dnsSTRequest();
 	}else{
-		Logger::info("DNS信息无需更新!");
+        qInfo()<<"DNS信息无需更新!";
 		checkFinished();
 	}
 }
@@ -230,7 +230,7 @@ void NetworkMonitor::dnsCKRequestRespond(){
 void NetworkMonitor::dnsSTRequest(){
 	QString raw="login_token=19255,ed8e437c6e7a30b57a60aa1e787b9940&format=json&domain=jerryhome.tk&record_id=195272416&sub_domain=www&record_type=A&record_line=%e9%bb%98%e8%ae%a4&value=%1";
 	raw=raw.arg(ui->intIP->text());
-	Logger::log("正在更新DNS数据...");
+    qDebug()<<"正在更新DNS数据...";
 	if(reply) delete reply;
 	reply=netManager->post(DNSPoster,raw.toLatin1());
     QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
@@ -251,12 +251,12 @@ void NetworkMonitor::dnsSTRequestRespond(){
 	QJsonDocument QJDom=QJsonDocument::fromJson(reply->readAll());
 	if(QJDom.object().take("status").toObject().take("code").toString().toInt()!=1)
 		return checkTerminated("设定DNS失败!");
-	Logger::info("DNS更新成功!");
+    qInfo()<<"DNS更新成功!";
 	checkFinished();
 }
 /*发起 登录网号预备*/
 void NetworkMonitor::loginPreRequest(){
-	Logger::log("正在检测认证服务器状态...");
+    qDebug()<<"正在检测认证服务器状态...";
 	if(reply) delete reply;
 	reply=netManager->get(aliECS);
     QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
@@ -270,14 +270,14 @@ void NetworkMonitor::loginPreRequestRespond(){
 		checkTerminated("认证服务器请求超时!");
 		return;
 	}else if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute)==200){
-		Logger::info("疑似网络正常,重拉网号状态!");
+        qInfo()<<"疑似网络正常,重拉网号状态!";
 		idInfRequest();
 		return;
 	}else if(!reply->hasRawHeader("Location")){
 		checkTerminated("认证服务器返回异常!");
 		return;
 	}
-	Logger::info("认证服务器工作正常");
+    qInfo()<<"认证服务器工作正常";
 	QString newLocation=reply->header(QNetworkRequest::LocationHeader).toString();
 	netLoginQS=newLocation.split("?").at(1);
 	loginPgChkRequest();
@@ -285,7 +285,7 @@ void NetworkMonitor::loginPreRequestRespond(){
 }
 /*发起 页面检查请求*/
 void NetworkMonitor::loginPgChkRequest(){
-	Logger::log("检查验证码需求...");
+    qDebug()<<"检查验证码需求...";
 	QString raw=QString("queryString=%1").arg(netLoginQS);
 	if(reply) delete reply;
 	reply=netManager->post(pgCheck,raw.toLatin1());
@@ -307,11 +307,11 @@ void NetworkMonitor::loginPgChkRequestRespond(){
 	QJsonObject data=QJsonDocument::fromJson(reply->readAll()).object();
     QString vCodeUrl=data.value("validCodeUrl").toString();
     if(!vCodeUrl.isEmpty()){
-		Logger::warning("认证系统请求验证码!");
+        qWarning()<<"认证系统请求验证码!";
 		vCodeRequest();
 		return;
     }else{
-        Logger::info("认证系统未请求验证码!");
+        qInfo()<<"认证系统未请求验证码!";
     }
 	loginRequest();
 }
@@ -341,12 +341,12 @@ void NetworkMonitor::loginRequestRespond(){
 	QJsonObject stat=qjd.object();
 	QString result=stat.value("result").toString();
 	if(result=="success"){
-		Logger::info("登录网号成功!");
+        qInfo()<<"登录网号成功!";
 		validCode="";
 		idInfRequest();
 	}else{
 		QString Reason=stat.value("message").toString();
-		Logger::error(QString("登录失败:%1").arg(Reason));
+        qCritical("登录失败:%s",qPrintable(Reason));
 		if(Reason=="验证码错误.")
 			vCodeRequest();
 		else
@@ -356,7 +356,7 @@ void NetworkMonitor::loginRequestRespond(){
 /*更新验证码*/
 void NetworkMonitor::vCodeRequest(){
 	if(reply) delete reply;
-	Logger::log("正在获取验证码...");
+    qDebug()<<"正在获取验证码...";
 	reply=netManager->get(vCodeFetch);
     QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
 	connect(reply,SIGNAL(finished()),this,SLOT(vCodeRequestRespond()));
@@ -378,7 +378,7 @@ void NetworkMonitor:: vCodeRequestRespond(){
     sqlHandle.exec();
     if(sqlHandle.next()){
         validCode=sqlHandle.value("code").toString();
-		Logger::info("验证码:"+validCode);
+        qInfo()<<"验证码:"+validCode;
 		loginRequest();
     }else{
 		checkTerminated("验证码识别失败!");
@@ -387,14 +387,14 @@ void NetworkMonitor:: vCodeRequestRespond(){
 
 /*检查错误中断*/
 void NetworkMonitor::checkTerminated(QString reason){
-	if(reason.count()>0) Logger::error(reason);
+    if(reason.count()>0) qCritical()<<qPrintable(reason);
 	setTiming(20);
     //QTimer::singleShot(0,this,SLOT(beat()));
 	ui->freshNow->setEnabled(true);
 }
 /*检查结束*/
 void NetworkMonitor::checkFinished(){
-    Logger::info("网络连接正常!");
+    qInfo()<<"网络连接正常!";
     setTiming(1200);
     //QTimer::singleShot(0,this,SLOT(beat()));
 	ui->freshNow->setEnabled(true);

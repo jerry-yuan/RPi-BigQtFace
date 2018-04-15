@@ -4,13 +4,30 @@
 #include "WebsocketServer.h"
 #include <QApplication>
 #include <QSqlDatabase>
+#include <QCommandLineParser>
+#include <QCommandLineOption>
 int main(int argc, char *argv[]){
-    QApplication a(argc, argv);
+    QApplication app(argc, argv);
+    app.setApplicationDisplayName("RPi-BigFace");
+    app.setApplicationName("RPi-BigFace");
+    app.setApplicationVersion("v2.0");
+    //Parse command line parameters and prepare the parameters
+    QCommandLineParser cmdParser;
+    cmdParser.addVersionOption();
+    cmdParser.addHelpOption();
+    QCommandLineOption verbose("verbose","Set if show all logs.");
+    cmdParser.addOption(verbose);
+    QCommandLineOption dbpath("dbpath","Set temporary database path.","dbpath",qApp->applicationDirPath()+"/Face.db");
+    cmdParser.addOption(dbpath);
+    cmdParser.process(app);
     //Prepare SQLite Database
     QSqlDatabase defaultDatabase=QSqlDatabase::addDatabase("QSQLITE");
-    defaultDatabase.setDatabaseName(qApp->applicationDirPath()+"/Face.db");
+    defaultDatabase.setDatabaseName(cmdParser.value(dbpath));
     defaultDatabase.open();
-    Logger::info("程序启动正常");
+    //Install the Message Handler
+    Logger::verbose=cmdParser.isSet(verbose);
+    qInstallMessageHandler(Logger::messageHandler);
+    qInfo()<<"程序启动正常";
     //Instance EventServer
     EventServer::instance();
     //Instance WebSocket Server
@@ -20,5 +37,5 @@ int main(int argc, char *argv[]){
     //Instance Face
 	Face w;
 	w.show();
-	return a.exec();
+    return app.exec();
 }

@@ -41,7 +41,7 @@ void NetworkSpeed::calcSpeed(){
 #endif
 	QFile *fp=new QFile("/proc/net/dev");
     if(!fp->open(QIODevice::ReadOnly|QIODevice::Text)){
-        Logger::error("获取网络流量失败!");
+        qDebug()<<"获取网络流量失败!";
         return;
     }
     QTextStream in(fp);

@@ -304,16 +304,6 @@
                <property name="selectionMode">
                 <enum>QAbstractItemView::NoSelection</enum>
                </property>
-               <item>
-                <property name="text">
-                 <string>1237867897978</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>6546455</string>
-                </property>
-               </item>
               </widget>
              </item>
             </layout>
@@ -530,8 +520,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>782</width>
-             <height>410</height>
+             <width>65</width>
+             <height>16</height>
             </rect>
            </property>
           </widget>

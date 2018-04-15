@@ -109,7 +109,7 @@ void GPIOAdapter::send(const QJsonObject &data){
     if(client->isOpen())
         client->write(QJsonDocument(data).toJson(QJsonDocument::Compact));
     else
-        Logger::error("[GA]连接GPIOServer失败!");
+        qDebug()<<"[GA]连接GPIOServer失败!";
 }
 void GPIOAdapter::msgReceived(){
 	QJsonObject event=QJsonDocument::fromJson(client->readAll()).object();

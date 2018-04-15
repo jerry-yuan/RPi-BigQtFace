@@ -10,14 +10,13 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = BigFace
 TEMPLATE = app
-
+DEFINES += QT_MESSAGELOGCONTEXT
 
 SOURCES += main.cpp\
         Face.cpp \
     NetworkMonitor.cpp \
     weather/WeatherWidget.cpp \
     weather/WindDirectDisplay.cpp \
-    Logger.cpp \
     NetworkSpeed.cpp \
     Clock.cpp \
     SysFuncDialog.cpp \
@@ -25,13 +24,13 @@ SOURCES += main.cpp\
     EventServer.cpp \
     GPIOAdapter.cpp \
     SysResMonitor.cpp \
-    WebsocketServer.cpp
+    WebsocketServer.cpp \
+    Logger.cpp
 
 HEADERS  += Face.h \
     NetworkMonitor.h \
     weather/WeatherWidget.h \
     weather/WindDirectDisplay.h \
-    Logger.h \
     Consts.h \
     NetworkSpeed.h \
     Clock.h \
@@ -41,7 +40,8 @@ HEADERS  += Face.h \
     GPIOAdapter.h \
     FuncPanel.h \
     SysResMonitor.h \
-    WebsocketServer.h
+    WebsocketServer.h \
+    Logger.h
 
 FORMS    += Face.ui \
     NetworkMonitor.ui \
@@ -57,3 +57,6 @@ INSTALLS+=target
 RESOURCES += \
     weather/weatherIcon.qrc \
     icons.qrc
+unix{
+    LIBS+= -lwiringpi
+}

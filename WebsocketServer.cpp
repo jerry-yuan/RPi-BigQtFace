@@ -26,9 +26,9 @@ WebsocketServer::WebsocketServer(QObject *parent):
     timer->setInterval(5000);
     this->registerObject("server",this);
     if(this->listen(QHostAddress::Any,6600))
-        Logger::info(QString("[WS]启动正常"));
+        qDebug()<<"[WS]启动正常";
     else
-        Logger::error(QString("[WS]%1").arg(this->errorString()));
+        qDebug("[WS]%s",qPrintable(this->errorString()));
     connect(this,SIGNAL(newConnection()),this,SLOT(newClientConnected()));
     connect(timer,SIGNAL(timeout()),this,SLOT(dropDiedSession()));
 }
@@ -63,6 +63,7 @@ void WebsocketServer::newClientConnected(){
     clients[client]=session;
     connect(client,SIGNAL(textMessageReceived(QString)),this,SLOT(messageReceived(QString)));
     connect(client,SIGNAL(disconnected()),this,SLOT(clientDisconnected()));
+    connect(client,SIGNAL(disconnected()),client,SLOT(deleteLater()));
     emit activeClientsChanged(clients.keys().length());
     if(!timer->isActive()) timer->start();
 }

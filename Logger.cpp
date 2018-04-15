@@ -1,81 +1,23 @@
 #include "Logger.h"
-#include <QDateTime>
-#include <QJsonDocument>
-#include <QJsonObject>
+#include <stdio.h>
+#include <stdlib.h>
+#include <QSqlDatabase>
 #include <QSqlQuery>
-#include <QSqlError>
-#include <QQueue>
+#include <QCommandLineParser>
+#include <QCommandLineOption>
+#include <QTextCodec>
 #include <QDebug>
-#include <QThreadPool>
-#include <QMutex>
-#include <QTimer>
-#include "EventServer.h"
-Logger* Logger::m_instance=0;
-QListWidget* Logger::logList=0;
-void Logger::setLogWidget(QListWidget *logList){
-	Logger::logList=logList;
-	logList->clear();
-    log_t t;
-    t.type=Fresh;
-    Logger::addLogToWidget(t);
-    //挂载清空
-    EventServer::instance()->addMethod(Logger::instance(),"clearLogWidget");
-}
-QQueue<log_t> *Logger::queue(){
-	return this->logQueue;
-}
 
-void Logger::addLogToWidget(log_t log){
-    static QQueue<log_t> widgetCache;
-    if(log.type!=Fresh)
-        widgetCache.enqueue(log);
-	if(Logger::logList==NULL) return;
-    while(!widgetCache.empty()){
-        log=widgetCache.dequeue();
-        QString LogContent=QDateTime::fromTime_t(log.timestamp).toString("[hh:mm:ss]")+log.content;
-        QListWidgetItem* item=new QListWidgetItem();
-        item->setText(LogContent);
-        switch(log.type){
-            case Log:		item->setForeground(QBrush(Qt::black));break;
-            case Info:		item->setForeground(QBrush(Qt::blue));break;
-            case Warning:	item->setForeground(QBrush(Qt::darkYellow));break;
-            case Error:		item->setForeground(QBrush(Qt::red));break;
-            default:break;
-        }
-        logList->addItem(item);
-        logList->scrollToBottom();
-    }
+bool Logger::verbose=true;
+Logger* Logger::m_instance=NULL;
+Logger::Logger(){
+    //初始化线程
+    logWidget=NULL;
+    qMutex=new QMutex();
+    qNotEmpty=new QWaitCondition();
+    logQueue=new QQueue<Log>();
+    this->start();
 }
-void Logger::clearLogWidget(QVariantHash){
-    logList->clear();
-}
-
-
-void Logger::logout(QString content, QString type){
-	QHash<QString,LogType> *logTypeMatching=new QHash<QString,LogType>();
-    logTypeMatching->insert("info",Info);
-    logTypeMatching->insert("warning",Warning);
-    logTypeMatching->insert("error",Error);
-    logTypeMatching->insert("log",Log);
-    if(logTypeMatching->contains(type.toLower()))
-        Logger::logout(content,logTypeMatching->value(type.toLower()));
-	else
-		Logger::logout(content);
-}
-
-void Logger::logout(QString content, LogType type){
-	log_t temp;
-	temp.timestamp=QDateTime::currentDateTime().toTime_t();
-	temp.content=content;
-	temp.type=type;
-	//写屏幕
-	Logger::addLogToWidget(temp);
-	//写数据库
-    Logger::instance()->addLogToQueue(temp);
-}
-/*
- * 单例函数
- */
 Logger* Logger::instance(){
     static QMutex insMutex;
     if(!Logger::m_instance){
@@ -85,42 +27,99 @@ Logger* Logger::instance(){
     }
     return Logger::m_instance;
 }
+void Logger::messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg){
+    Log temp;
+    temp.type=type;
+    temp.file=QString(context.file);
+    temp.line=context.line;
+    temp.function=QString(context.function);
+    temp.message=msg;
+    temp.time=QDateTime::currentDateTime();
+    temp.flushTag=false;
 
-/*
- * 线程函数
-*/
-Logger::Logger(){
-	//初始化线程
-	qMutex=new QMutex();
-	qNotEmpty=new QWaitCondition();
-	logQueue=new QQueue<log_t>();
-	this->start();
+    if(Logger::verbose){
+        const char* msgStr=qPrintable(msg);
+        switch (type) {
+            case QtDebugMsg:
+                fprintf(stdout, "[DEBUG]\t[%s]%s\n",context.function, msgStr);
+                break;
+            case QtInfoMsg:
+                fprintf(stderr, "[INFO]\t[%s]%s\n",context.function, msgStr);
+                break;
+            case QtWarningMsg:
+                fprintf(stderr, "[WARN]\t[%s]%s\n",context.function, msgStr);
+                break;
+            case QtCriticalMsg:
+                fprintf(stderr, "[ERROR]\t[%s]%s\n",context.function, msgStr);
+                break;
+            case QtFatalMsg:
+                fprintf(stderr, "[FATAL]\t[%s]%s\n",context.function, msgStr);
+                abort();
+        }
+        fflush(stdout);
+        fflush(stderr);
+    }
+    Logger::instance()->enqueue(temp);
+    Logger::instance()->addToLogWidget(temp);
 }
-void Logger::addLogToQueue(log_t log){
-	if(!logQueue) logQueue=new QQueue<log_t>();
-	logQueue->enqueue(log);
-	qNotEmpty->wakeAll();
+void Logger::setLogWidget(QListWidget* widget){
+    this->logWidget=widget;
+    Log t;
+    t.flushTag=true;
+    addToLogWidget(t);
 }
+
+void Logger::addToLogWidget(Log log){
+    static QQueue<Log> widgetCache;
+    if(!log.flushTag)
+        widgetCache.enqueue(log);
+    if(this->logWidget==NULL) return;
+    while(!widgetCache.empty()){
+        log=widgetCache.dequeue();
+        QString LogContent=log.time.toString("[hh:mm:ss]")+log.message;
+        QListWidgetItem* item=new QListWidgetItem();
+        item->setText(LogContent);
+        switch(log.type){
+            case QtDebugMsg:    item->setForeground(QBrush(Qt::black));break;
+            case QtInfoMsg:     item->setForeground(QBrush(Qt::blue));break;
+            case QtWarningMsg:  item->setForeground(QBrush(Qt::darkYellow));break;
+            case QtCriticalMsg: item->setForeground(QBrush(Qt::red));break;
+            default:break;
+        }
+        logWidget->addItem(item);
+        logWidget->scrollToBottom();
+    }
+}
+void Logger::enqueue(Log log){
+    logQueue->enqueue(log);
+    qNotEmpty->wakeAll();
+}
+
+
 void Logger::run(){
     QSqlDatabase db;
     QSqlQuery sqlHandle(db);
-	log_t temp;
-	while(1){
-		qMutex->lock();
-		if(logQueue->length()<1)
-			qNotEmpty->wait(qMutex);
-		qMutex->unlock();
+    Log temp;
+    while(1){
+        qMutex->lock();
+        if(logQueue->length()<1)
+            qNotEmpty->wait(qMutex);
+        qMutex->unlock();
         db.transaction();
         //DBUtil::beginTransaction();
         //sqlHandle=DBUtil::getSqlHandle();
-		while(!logQueue->empty()){
-			temp=logQueue->dequeue();
-            sqlHandle.prepare("insert into faceLog (timestamp,content,type) values (?,?,?)");
-            sqlHandle.bindValue(0,QVariant(temp.timestamp));
-            sqlHandle.bindValue(1,temp.content);
+        while(!logQueue->empty()){
+            temp=logQueue->dequeue();
+            sqlHandle.prepare("insert into faceLog (timestamp,content,type,file,line,function) values (?,?,?,?,?,?)");
+            sqlHandle.bindValue(0,QVariant(temp.time.toTime_t()));
+            sqlHandle.bindValue(1,temp.message);
             sqlHandle.bindValue(2,QVariant(temp.type));
+            sqlHandle.bindValue(3,temp.file);
+            sqlHandle.bindValue(4,QVariant(temp.line));
+            sqlHandle.bindValue(5,temp.function);
             sqlHandle.exec();
-		}
+        }
+        db.commit();
         //DBUtil::commitTransaction();
-	}
+    }
 }

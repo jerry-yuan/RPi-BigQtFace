@@ -23,7 +23,7 @@ Face::Face(QWidget *parent) :
 {
 	ui->setupUi(this);
     this->loader=NULL;
-	Logger::setLogWidget(ui->logWidget);
+    Logger::instance()->setLogWidget(ui->logWidget);
     HaltDialog::instance();
 	connect(ui->clock,SIGNAL(timeMutated()),ui->networkMonitor,SLOT(updateTime()));
 

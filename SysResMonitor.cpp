@@ -133,7 +133,11 @@ QJsonValue SysResMonitor::getSysRes(){
     //CPU负载
     double load[3];
     QJsonObject cpuLoad;
+#ifndef _WIN32
     getloadavg(load,3);
+#else
+    load[0]=load[1]=load[2]=0;
+#endif
     cpuLoad.insert("load1",load[0]);
     cpuLoad.insert("load5",load[1]);
     cpuLoad.insert("load15",load[2]);

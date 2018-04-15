@@ -1,6 +1,5 @@
 #include "HaltDialog.h"
 #include "ui_HaltDialog.h"
-#include "GPIOAdapter.h"
 #include "EventServer.h"
 #include <QDebug>
 #include <QProcess>
@@ -20,6 +19,7 @@ HaltDialog::HaltDialog(QWidget *parent) :
 	timer=new QTimer(this);
 	timer->setInterval(1000);
 	beep=false;
+    beeper=new Beeper(this);
 	connect(timer,SIGNAL(timeout()),this,SLOT(flushTitle()));
 	connect(ui->cancel,SIGNAL(clicked()),this,SLOT(close()));
 	connect(ui->cancel,SIGNAL(clicked()),timer,SLOT(stop()));
@@ -67,8 +67,8 @@ void HaltDialog::flushTitle(){
 		if(beep){
 			ui->cancel->setEnabled(false);
 			ui->cancel->setText(QString("即将%1").arg(map.value(action)));
-			GPIOAdapter::beep(3,100);
-			QTimer::singleShot(400,this,SLOT(doAction()));
+            beeper->beep(3);
+            QTimer::singleShot(400,this,SLOT(doAction()));
 		}else{
 			doAction();
 		}
@@ -79,14 +79,14 @@ void HaltDialog::halt(int delay, bool beep){
     this->triggerTime=QDateTime::currentDateTime().addSecs(delay);
 	this->beep=beep;
     if(beep)
-        GPIOAdapter::beep(2,100);
+        beeper->beep(2);
 	if(this->delay>1){
 		this->flushTitle();
 		timer->start();
 		this->show();
 	}else{
-		if(beep){
-			GPIOAdapter::beep(3,100);
+        if(beep){
+            beeper->beep(3);
 			QTimer::singleShot(400,this,SLOT(doAction()));
 		}else{
 			doAction();
@@ -99,14 +99,14 @@ void HaltDialog::reboot(int delay, bool beep){
     this->triggerTime=QDateTime::currentDateTime().addSecs(delay);
     this->beep=beep;
     if(beep)
-        GPIOAdapter::beep(2,100);
+        beeper->beep(2);
 	if(this->delay>1){
 		this->flushTitle();
 		timer->start();
 		this->show();
 	}else{
-		if(beep){
-			GPIOAdapter::beep(3,100);
+        if(beep){
+            beeper->beep(3);
 			QTimer::singleShot(400,this,SLOT(doAction()));
 		}else{
 			doAction();

@@ -1,10 +1,10 @@
 #include "SysFuncDialog.h"
 #include "ui_SysFuncDialog.h"
 #include "HaltDialog.h"
-#include "GPIOAdapter.h"
 #include <QDebug>
 #include <QEvent>
 #include <QMouseEvent>
+#include <QFile>
 SysFuncDialog::SysFuncDialog(QWidget *parent) :
 	QDialog(parent),
 	ui(new Ui::SysFuncDialog)
@@ -34,14 +34,14 @@ SysFuncDialog::SysFuncDialog(QWidget *parent) :
 
 	connect(ui->exit,SIGNAL(clicked()),qApp,SLOT(quit()));
 
-    connect(ui->backlightSlider,SIGNAL(valueChanged(int)),GPIOAdapter::instance(),SLOT(setLCDBrightness(int)));
-	connect(ui->backlightSlider,SIGNAL(valueChanged(int)),this,SLOT(resetTimer()));
+    int backlight=this->backlight();
+    qDebug()<<"当前亮度:"<<backlight;
+    ui->backlightSlider->setEnabled(backlight>0);
+    ui->backlightSlider->setValue(backlight);
+
+    connect(ui->backlightSlider,SIGNAL(valueChanged(int)),this,SLOT(resetTimer()));
 	connect(ui->backlightSlider,SIGNAL(sliderPressed()),this,SLOT(resetTimer()));
-
-    connect(GPIOAdapter::instance(),SIGNAL(LCDBrightnessReturned(int)),ui->backlightSlider,SLOT(setValue(int)));
-    connect(GPIOAdapter::instance(),SIGNAL(LCDBrightnessReturned(int)),this,SLOT(brightnessLoaded()));
-
-    GPIOAdapter::instance()->getLCDBrightness();
+    connect(ui->backlightSlider,SIGNAL(valueChanged(int)),this,SLOT(setBacklight(int)));
 
 	ui->backlightSlider->installEventFilter(this);
 
@@ -53,6 +53,28 @@ SysFuncDialog::SysFuncDialog(QWidget *parent) :
 SysFuncDialog::~SysFuncDialog(){
 	delete ui;
     delete timer;
+}
+
+int SysFuncDialog::backlight(){
+    QFile blFile("/sys/class/backlight/rpi_backlight/brightness");
+    if(!blFile.open(QIODevice::ReadOnly)){
+        qDebug()<<"获取屏幕亮度失败:"<<blFile.errorString();
+        return -1;
+    }
+    int backlight=blFile.readLine().replace("\n","").toInt();
+    blFile.close();
+    return backlight;
+}
+
+void SysFuncDialog::setBacklight(int rate){
+    QFile blFile("/sys/class/backlight/rpi_backlight/brightness");
+    if(!blFile.open(QIODevice::WriteOnly)){
+        qDebug()<<"无法设置亮度(文件错误):"<<blFile.errorString();
+        return;
+    }
+
+    blFile.write(QString::number(rate).toLocal8Bit());
+    blFile.close();
 }
 
 void SysFuncDialog::halt(){

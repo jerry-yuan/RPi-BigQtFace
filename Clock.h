@@ -2,6 +2,7 @@
 #define CLOCK_H
 #include <QLCDNumber>
 #include <QObject>
+#include "Beeper.h"
 
 class Clock : public QLCDNumber{
 	Q_OBJECT
@@ -17,6 +18,6 @@ private slots:
 	void flush();
 private:
 	QDateTime *last;
-	QTimer* timer;
+    QTimer* timer;
 };
 #endif // CLOCK_H

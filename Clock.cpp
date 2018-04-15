@@ -2,12 +2,12 @@
 #include <QTimer>
 #include <QLCDNumber>
 #include <QDateTime>
-#include "GPIOAdapter.h"
 Clock::Clock(QWidget *parent):QLCDNumber(parent){
 	timer=new QTimer(this);
 	connect(timer,SIGNAL(timeout()),this,SLOT(flush()));
     timer->setInterval(250);
     last=NULL;
+
 }
 Clock::~Clock(){
 	delete timer;
@@ -32,9 +32,9 @@ void Clock::flush(){
 	else
 		display(now->toString("hh mm ss"));
     if(last!=NULL){
-		if(now->toTime_t()-last->toTime_t()>10000)
+        if(last->secsTo(*now)>1000)
 			emit timeMutated();
 		delete last;
 	}
-	last=now;
+    last=now;
 }

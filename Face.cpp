@@ -2,7 +2,6 @@
 #include "ui_Face.h"
 #include "Logger.h"
 #include "SysFuncDialog.h"
-#include "GPIOAdapter.h"
 #include "FuncPanel.h"
 #include "HaltDialog.h"
 

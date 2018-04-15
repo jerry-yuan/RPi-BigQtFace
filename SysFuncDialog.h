@@ -24,11 +24,12 @@ private slots:
 	void halt();
 	void reboot();
 
-	void flushCounter();
-	//void updateBright(int b);
+    void flushCounter();
+    void setBacklight(int rate);
 	void resetTimer();
 	void brightnessLoaded();
 private:
+    int backlight();
 	Ui::SysFuncDialog *ui;
 	int count;
 	QTimer* timer;

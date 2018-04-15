@@ -1,11 +1,12 @@
 #include "Face.h"
 #include "Logger.h"
-#include "GPIOAdapter.h"
 #include "WebsocketServer.h"
 #include <QApplication>
 #include <QSqlDatabase>
 #include <QCommandLineParser>
 #include <QCommandLineOption>
+#include <wiringPi.h>
+#include <Beeper.h>
 int main(int argc, char *argv[]){
     QApplication app(argc, argv);
     app.setApplicationDisplayName("RPi-BigFace");
@@ -28,12 +29,12 @@ int main(int argc, char *argv[]){
     Logger::verbose=cmdParser.isSet(verbose);
     qInstallMessageHandler(Logger::messageHandler);
     qInfo()<<"程序启动正常";
+    //WiringPi
+    wiringPiSetup();
     //Instance EventServer
     EventServer::instance();
     //Instance WebSocket Server
     WebsocketServer::instance();
-    //Instance GPIOAdapter
-    GPIOAdapter::instance();
     //Instance Face
 	Face w;
 	w.show();

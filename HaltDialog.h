@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QVariantHash>
 #include <QDateTime>
+#include "Beeper.h"
 namespace Ui {
 	class HaltDialog;
 	}
@@ -31,6 +32,7 @@ private:
 	QHash<QString,QString> map;
 	QTimer* timer;
 	Ui::HaltDialog *ui;
+    Beeper* beeper;
 };
 
 #endif // HALTDIALOG_H

@@ -22,10 +22,10 @@ SOURCES += main.cpp\
     SysFuncDialog.cpp \
     HaltDialog.cpp \
     EventServer.cpp \
-    GPIOAdapter.cpp \
     SysResMonitor.cpp \
     WebsocketServer.cpp \
-    Logger.cpp
+    Logger.cpp \
+    Beeper.cpp
 
 HEADERS  += Face.h \
     NetworkMonitor.h \
@@ -37,11 +37,11 @@ HEADERS  += Face.h \
     SysFuncDialog.h \
     HaltDialog.h \
     EventServer.h \
-    GPIOAdapter.h \
     FuncPanel.h \
     SysResMonitor.h \
     WebsocketServer.h \
-    Logger.h
+    Logger.h \
+    Beeper.h
 
 FORMS    += Face.ui \
     NetworkMonitor.ui \

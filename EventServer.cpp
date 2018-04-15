@@ -8,7 +8,6 @@
 #include <QJsonParseError>
 #include "Logger.h"
 #include "HaltDialog.h"
-#include "GPIOAdapter.h"
 #include <QMetaMethod>
 EventServer* EventServer::m_instance=NULL;
 EventServer* EventServer::instance(){

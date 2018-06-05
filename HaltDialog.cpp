@@ -68,7 +68,7 @@ void HaltDialog::flushTitle(){
 			ui->cancel->setEnabled(false);
 			ui->cancel->setText(QString("即将%1").arg(map.value(action)));
             beeper->beep(3);
-            QTimer::singleShot(400,this,SLOT(doAction()));
+            QTimer::singleShot(650,this,SLOT(doAction()));
 		}else{
 			doAction();
 		}
@@ -87,7 +87,7 @@ void HaltDialog::halt(int delay, bool beep){
 	}else{
         if(beep){
             beeper->beep(3);
-			QTimer::singleShot(400,this,SLOT(doAction()));
+            QTimer::singleShot(650,this,SLOT(doAction()));
 		}else{
 			doAction();
 		}
@@ -107,7 +107,7 @@ void HaltDialog::reboot(int delay, bool beep){
 	}else{
         if(beep){
             beeper->beep(3);
-			QTimer::singleShot(400,this,SLOT(doAction()));
+            QTimer::singleShot(650,this,SLOT(doAction()));
 		}else{
 			doAction();
 		}

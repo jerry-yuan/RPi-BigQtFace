@@ -5,6 +5,8 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QTimer>
+
+#define CHECK_TERMINATE_CONTEXT QT_MESSAGELOG_FILE, QT_MESSAGELOG_LINE, QT_MESSAGELOG_FUNC
 namespace Ui {
 	class NetworkMonitor;
 	}
@@ -59,6 +61,8 @@ private:
 	QString currentName;	//当前网号所属人
     QDateTime netIdDeadline;		//当前网号过期时间
 
+    quint8 retriedTimes;
+
 	void startCheck();			//启动检测网络流程
 	void ethCKRequest();		//IP获取&内网检测		发起请求
 	void idInfRequest();		//检查网号			发起请求
@@ -70,7 +74,8 @@ private:
 	void loginRequest();		//登录网号			发起请求
 	void vCodeRequest();		//更新验证码			发起请求
 
-	void checkTerminated(QString reason="");		//检查错误中断
+    void checkTerminated(QString reason, const char *file, int line, const char *function);	//检查错误中断
+    void checkTerminated();
 	void checkFinished();		//检查完成
 
 	void showEthIP();			//显示内网IP

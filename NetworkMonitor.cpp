@@ -20,6 +20,7 @@ NetworkMonitor::NetworkMonitor(QWidget *parent) :
 	//初始化 网络管理器
 	netManager=new QNetworkAccessManager();
 	reply=NULL;
+    retriedTimes=0;
 	/*初始化 网络请求*/
 	//初始化 https策略
 	QSslConfiguration sslConfig;
@@ -95,11 +96,11 @@ void NetworkMonitor::ethCKRequestRespond(){
     //qDebug()<<reply->errorString();
     if(reply->error()==QNetworkReply::OperationCanceledError){
 		reply->disconnect();
-		checkTerminated("校园网检测超时!");
+        checkTerminated("校园网检测超时!",CHECK_TERMINATE_CONTEXT);
 		return;
 	}
 	if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()!=200)
-		return checkTerminated("校园网连接中断!");
+        return checkTerminated("校园网连接中断!",CHECK_TERMINATE_CONTEXT);
 	QString body=QString(reply->readAll());
 	QRegExp rx("(\\d{1,3}\\.){3}\\d{1,3}");
 	int pos = 0;
@@ -110,7 +111,7 @@ void NetworkMonitor::ethCKRequestRespond(){
 		IPS << result;
 	}
 	if(IPS.count()<=0)
-		return checkTerminated("查询公网IP失败!");
+        return checkTerminated("查询公网IP失败!",CHECK_TERMINATE_CONTEXT);
 	ui->intIP->setText(IPS[IPS.count()-1]);
     qInfo()<<"校园网连接正常!";
     idInfRequest();
@@ -130,13 +131,13 @@ void NetworkMonitor::idInfRequestRespond(){
         reply->disconnect();
         ui->netId->setText("[拉取超时]");
         //ui->netIdDead->setText("[拉取超时]");
-		checkTerminated("拉取网号状态数据超时!");
+        checkTerminated("拉取网号状态数据超时!",CHECK_TERMINATE_CONTEXT);
 		return;
 	}
     if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()!=200){
         ui->netId->setText("[通信失败]");
         //ui->netIdDead->setText("[通信失败]");
-        checkTerminated(QString("认证服务器返回异常(%1)!").arg(QString::number(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt())));
+        checkTerminated(QString("认证服务器返回异常(%1)!").arg(QString::number(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt())),CHECK_TERMINATE_CONTEXT);
 		return;
 	}
 	QJsonDocument qjd=QJsonDocument::fromJson(reply->readAll());
@@ -185,11 +186,11 @@ void NetworkMonitor::aliECSRequestRespond(){
     reply->blockSignals(true);
     if(reply->error()==QNetworkReply::OperationCanceledError){
 		reply->disconnect();
-		checkTerminated("更新阿里云超时!");
+        checkTerminated("更新阿里云超时!",CHECK_TERMINATE_CONTEXT);
 		return;
 	}
 	if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()!=666){
-		checkTerminated("公网异常稍后重试!");
+        checkTerminated("公网异常稍后重试!",CHECK_TERMINATE_CONTEXT);
 		return;
 	}
     qInfo()<<"阿里云已经更新!";
@@ -210,14 +211,14 @@ void NetworkMonitor::dnsCKRequestRespond(){
     reply->blockSignals(true);
 	if(reply->error()==QNetworkReply::OperationCanceledError){
 		reply->disconnect();
-		checkTerminated("请求DNSPod超时!");
+        checkTerminated("请求DNSPod超时!",CHECK_TERMINATE_CONTEXT);
 		return;
 	}
 	if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute)!=200)
-		return checkTerminated("检查DNS时发生HTTP错误!");
+        return checkTerminated("检查DNS时发生HTTP错误!",CHECK_TERMINATE_CONTEXT);
 	QJsonDocument QJDom=QJsonDocument::fromJson(reply->readAll());
 	if(QJDom.object().take("status").toObject().take("code").toString().toInt()!=1)
-		checkTerminated("检查DNS时发生鉴权错误!");
+        checkTerminated("检查DNS时发生鉴权错误!",CHECK_TERMINATE_CONTEXT);
 	else if(QJDom.object().take("record").toObject().take("value").toString()!=ui->intIP->text()){
         qWarning()<<"DNS信息过期!";
 		dnsSTRequest();
@@ -243,14 +244,14 @@ void NetworkMonitor::dnsSTRequestRespond(){
     reply->blockSignals(true);
 	if(reply->error()==QNetworkReply::OperationCanceledError){
 		reply->disconnect();
-		checkTerminated("请求DNSPod超时!");
+        checkTerminated("请求DNSPod超时!",CHECK_TERMINATE_CONTEXT);
 		return;
 	}
 	if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute)!=200)
-		return checkTerminated("设定DNS时发生HTTP错误!");
+        return checkTerminated("设定DNS时发生HTTP错误!",CHECK_TERMINATE_CONTEXT);
 	QJsonDocument QJDom=QJsonDocument::fromJson(reply->readAll());
 	if(QJDom.object().take("status").toObject().take("code").toString().toInt()!=1)
-		return checkTerminated("设定DNS失败!");
+        return checkTerminated("设定DNS失败!",CHECK_TERMINATE_CONTEXT);
     qInfo()<<"DNS更新成功!";
 	checkFinished();
 }
@@ -267,14 +268,14 @@ void NetworkMonitor::loginPreRequestRespond(){
     reply->blockSignals(true);
 	if(reply->error()==QNetworkReply::OperationCanceledError){
 		reply->disconnect();
-		checkTerminated("认证服务器请求超时!");
+        checkTerminated("认证服务器请求超时!",CHECK_TERMINATE_CONTEXT);
 		return;
 	}else if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute)==200){
         qInfo()<<"疑似网络正常,重拉网号状态!";
 		idInfRequest();
 		return;
 	}else if(!reply->hasRawHeader("Location")){
-		checkTerminated("认证服务器返回异常!");
+        checkTerminated("认证服务器返回异常!",CHECK_TERMINATE_CONTEXT);
 		return;
 	}
     qInfo()<<"认证服务器工作正常";
@@ -298,10 +299,10 @@ void NetworkMonitor::loginPgChkRequestRespond(){
     reply->blockSignals(true);
 	if(reply->error()==QNetworkReply::OperationCanceledError){
 		reply->disconnect();
-        checkTerminated("检查网络环境超时!");
+        checkTerminated("检查网络环境超时!",CHECK_TERMINATE_CONTEXT);
 		return;
 	}else if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()!=200){
-        checkTerminated("检查网络环境时发生网络错误!");
+        checkTerminated("检查网络环境时发生网络错误!",CHECK_TERMINATE_CONTEXT);
 		return;
 	}
 	QJsonObject data=QJsonDocument::fromJson(reply->readAll()).object();
@@ -331,10 +332,10 @@ void NetworkMonitor::loginRequestRespond(){
     reply->blockSignals(true);
 	if(reply->error()==QNetworkReply::OperationCanceledError){
 		reply->disconnect();
-		checkTerminated("登录网号超时!");
+        checkTerminated("登录网号超时!",CHECK_TERMINATE_CONTEXT);
 		return;
 	}else if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()!=200){
-		checkTerminated("登录网号时发生网络错误!");
+        checkTerminated("登录网号时发生网络错误!",CHECK_TERMINATE_CONTEXT);
 		return;
 	}
 	QJsonDocument qjd=QJsonDocument::fromJson(reply->readAll());
@@ -366,7 +367,7 @@ void NetworkMonitor:: vCodeRequestRespond(){
     reply->blockSignals(true);
     if(reply->error()==QNetworkReply::OperationCanceledError){
 		reply->disconnect();
-		checkTerminated("获取验证码超时!");
+        checkTerminated("获取验证码超时!",CHECK_TERMINATE_CONTEXT);
 		return;
 	}
     QByteArray data=reply->readAll();
@@ -378,23 +379,36 @@ void NetworkMonitor:: vCodeRequestRespond(){
     sqlHandle.exec();
     if(sqlHandle.next()){
         validCode=sqlHandle.value("code").toString();
-        qInfo()<<"验证码:"+validCode;
+        qInfo()<<qPrintable(QString("验证码:%1").arg(validCode));
 		loginRequest();
     }else{
-		checkTerminated("验证码识别失败!");
+        checkTerminated("验证码识别失败!",CHECK_TERMINATE_CONTEXT);
 	}
 }
 
+void NetworkMonitor::checkTerminated(){
+    return NetworkMonitor::checkTerminated("",CHECK_TERMINATE_CONTEXT);
+}
+
 /*检查错误中断*/
-void NetworkMonitor::checkTerminated(QString reason){
-    if(reason.count()>0) qCritical()<<qPrintable(reason);
-	setTiming(20);
+void NetworkMonitor::checkTerminated(QString reason,const char *file, int line, const char *function){
+    if(reason.count()>0)
+        QMessageLogger(file, line, function).critical()<<qPrintable(reason);
+    this->retriedTimes++;
+    if(this->retriedTimes>=5){
+        this->retriedTimes=0;
+        qCritical()<<"重试次数超过5次,5分钟后重试";
+        setTiming(300);
+    }else{
+        setTiming(20);
+    }
     //QTimer::singleShot(0,this,SLOT(beat()));
 	ui->freshNow->setEnabled(true);
 }
 /*检查结束*/
 void NetworkMonitor::checkFinished(){
     qInfo()<<"网络连接正常!";
+    this->retriedTimes=0;
     setTiming(1200);
     //QTimer::singleShot(0,this,SLOT(beat()));
 	ui->freshNow->setEnabled(true);
@@ -417,7 +431,7 @@ void NetworkMonitor::beat(){
 */
 /* 获取&显示内网IP*/
 void NetworkMonitor::showEthIP(){
-	QNetworkInterface eth0=QNetworkInterface::interfaceFromName("eth0");
+    QNetworkInterface eth0=QNetworkInterface::interfaceFromName("eth0");
 	QList<QNetworkAddressEntry> entryList = eth0.addressEntries();
 	QString EthIP;
 	QRegExp ip("(\\d{1,3}\\.){3}\\d{1,3}");
@@ -447,6 +461,7 @@ void NetworkMonitor::refreshImmediately(){
 	ui->countBar->setValue(0);
     ui->freshTime->setText(nextFresh.toString("HH:mm:ss"));
     heart->stop();
+    this->retriedTimes=0;
     this->startCheck();
 }
 void NetworkMonitor::updateTime(){

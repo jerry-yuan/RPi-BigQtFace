@@ -5,5 +5,6 @@
         <file alias="view-fresh.svg">icons/view-refresh.svg</file>
         <file alias="emblem-system.svg">icons/emblem-system.svg</file>
         <file alias="go-previous.svg">icons/go-previous.svg</file>
+        <file alias="emblem-unreadable.svg">icons/emblem-unreadable.svg</file>
     </qresource>
 </RCC>

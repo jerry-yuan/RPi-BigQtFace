@@ -35,7 +35,6 @@ SysFuncDialog::SysFuncDialog(QWidget *parent) :
 	connect(ui->exit,SIGNAL(clicked()),qApp,SLOT(quit()));
 
     int backlight=this->backlight();
-    qDebug()<<"当前亮度:"<<backlight;
     ui->backlightSlider->setEnabled(backlight>0);
     ui->backlightSlider->setValue(backlight);
 

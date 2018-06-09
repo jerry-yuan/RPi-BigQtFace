@@ -77,7 +77,7 @@ void SysFuncDialog::setBacklight(int rate){
 }
 
 void SysFuncDialog::halt(){
-    HaltDialog::instance()->halt(10);
+    HaltDialog::instance()->halt(10,true);
 }
 
 void SysFuncDialog::reboot(){

@@ -22,7 +22,7 @@ private slots:
 	void ethCKRequestRespond();	//IP获取&内网检测		请求响应槽
 	void idInfRequestRespond();//网号状态拉取			请求响应槽
 
-	void aliECSRequestRespond();//阿里云状态转储		请求响应槽
+    void ipHostRequestRespond();//阿里云状态转储		请求响应槽
 
 	void dnsCKRequestRespond();	//DNS查询			请求响应槽
 	void dnsSTRequestRespond();	//DNS设定			请求响应槽
@@ -48,7 +48,7 @@ private:
 
 	QNetworkRequest vUPC;			//v.upc请求
 	QNetworkRequest netIDInfo;		//获取网号状态
-	QNetworkRequest aliECS;			//网络测试
+    QNetworkRequest ipHost;			//网络测试
 	QNetworkRequest DNSReader;		//DNS查询
 	QNetworkRequest DNSPoster;		//DNS设定
 	QNetworkRequest pgCheck;		//登录页面检查
@@ -66,7 +66,7 @@ private:
 	void startCheck();			//启动检测网络流程
 	void ethCKRequest();		//IP获取&内网检测		发起请求
 	void idInfRequest();		//检查网号			发起请求
-	void aliECSRequest();		//阿里云状态转储		发起请求
+    void ipHostRequest();		//阿里云状态转储		发起请求
 	void dnsCKRequest();		//DNS查询			发起请求
 	void dnsSTRequest();		//DNS设定			发起请求
 	void loginPreRequest();		//获取登录地址			发起请求

@@ -19,7 +19,7 @@ HaltDialog::HaltDialog(QWidget *parent) :
 	timer=new QTimer(this);
 	timer->setInterval(1000);
 	beep=false;
-    beeper=new Beeper(this);
+    beeper=new BeeperThread(this);
 	connect(timer,SIGNAL(timeout()),this,SLOT(flushTitle()));
 	connect(ui->cancel,SIGNAL(clicked()),this,SLOT(close()));
 	connect(ui->cancel,SIGNAL(clicked()),timer,SLOT(stop()));

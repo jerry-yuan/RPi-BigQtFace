@@ -25,7 +25,7 @@ SOURCES += main.cpp\
     SysResMonitor.cpp \
     WebsocketServer.cpp \
     Logger.cpp \
-    Beeper.cpp
+    BeeperThread.cpp
 
 HEADERS  += Face.h \
     NetworkMonitor.h \
@@ -41,7 +41,7 @@ HEADERS  += Face.h \
     SysResMonitor.h \
     WebsocketServer.h \
     Logger.h \
-    Beeper.h
+    BeeperThread.h
 
 FORMS    += Face.ui \
     NetworkMonitor.ui \

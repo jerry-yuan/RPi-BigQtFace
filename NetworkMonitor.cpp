@@ -33,19 +33,19 @@ NetworkMonitor::NetworkMonitor(QWidget *parent) :
 	//初始化 网号登录状态地址(getUserInfo)
 	netIDInfo.setUrl(QUrl("http://121.251.251.207/eportal/InterFace.do?method=getOnlineUserInfo"));
 	netIDInfo.setHeader(QNetworkRequest::ContentTypeHeader,"application/x-www-form-urlencoded");
-	//初始化 外网检测地址(ALiECS)
-	aliECS.setUrl(QUrl("http://ip.since2014.cn"));
-	aliECS.setSslConfiguration(sslConfig);
-	aliECS.setHeader(QNetworkRequest::ContentTypeHeader,"application/x-www-form-urlencoded");
+    //初始化 外网检测地址(ipHost)
+    ipHost.setUrl(QUrl("http://ip.jerryzone.cn"));
+    ipHost.setSslConfiguration(sslConfig);
+    ipHost.setHeader(QNetworkRequest::ContentTypeHeader,"application/x-www-form-urlencoded");
 	//初始化 DNS检测地址(DNSPod)
 	DNSReader.setUrl(QUrl("https://dnsapi.cn/Record.Info"));
 	DNSReader.setSslConfiguration(sslConfig);
-	DNSReader.setHeader(QNetworkRequest::UserAgentHeader,"RaspiFace/1.0(i@jerryzone.cn)");
+    DNSReader.setHeader(QNetworkRequest::UserAgentHeader,"RaspiFace/2.0(i@jerryzone.cn)");
 	DNSReader.setHeader(QNetworkRequest::ContentTypeHeader,"application/x-www-form-urlencoded");
 	//初始化 DNS设定地址(DNSPod)
 	DNSPoster.setUrl(QUrl("https://dnsapi.cn/Record.Modify"));
 	DNSPoster.setSslConfiguration(sslConfig);
-	DNSPoster.setHeader(QNetworkRequest::UserAgentHeader,"RaspiFace/1.0(i@jerryzone.cn)");
+    DNSPoster.setHeader(QNetworkRequest::UserAgentHeader,"RaspiFace/2.0(i@jerryzone.cn)");
 	DNSPoster.setHeader(QNetworkRequest::ContentTypeHeader,"application/x-www-form-urlencoded");
 	//初始化 登录页面检查地址
 	pgCheck.setUrl(QUrl("http://121.251.251.207/eportal/InterFace.do?method=pageInfo"));
@@ -169,31 +169,31 @@ void NetworkMonitor::idInfRequestRespond(){
     ui->netId->setText(currentId);
     ui->netIdName->setText(currentName);
     //ui->netIdDead->setText(QString("%1%2").arg(netIdDeadline.toString("yyyy-MM-dd"),remainDate));
-    aliECSRequest();
+    ipHostRequest();
 }
-/* 发起 阿里云转储请求*/
-void NetworkMonitor::aliECSRequest(){
-    qDebug()<<"正在更新阿里云状态...";
+/* 发起 转储服务器转储请求*/
+void NetworkMonitor::ipHostRequest(){
+    qDebug()<<"正在更新转储服务器状态...";
 	if(reply) delete reply;
 	QString raw("TG=Raspi&IP=%1&timestamp=%2&Life=1200");
 	raw=raw.arg(ui->intIP->text(),QString::number(QDateTime::currentDateTime().toTime_t()));
-    reply=netManager->post(aliECS,raw.toUtf8());
+    reply=netManager->post(ipHost,raw.toUtf8());
     QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
-	connect(reply,SIGNAL(finished()),this,SLOT(aliECSRequestRespond()));
+    connect(reply,SIGNAL(finished()),this,SLOT(ipHostRequestRespond()));
 }
 /* 检查网络 请求响应*/
-void NetworkMonitor::aliECSRequestRespond(){
+void NetworkMonitor::ipHostRequestRespond(){
     reply->blockSignals(true);
     if(reply->error()==QNetworkReply::OperationCanceledError){
 		reply->disconnect();
-        checkTerminated("更新阿里云超时!",CHECK_TERMINATE_CONTEXT);
+        checkTerminated("更新转储服务器超时!",CHECK_TERMINATE_CONTEXT);
 		return;
 	}
 	if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()!=666){
         checkTerminated("公网异常稍后重试!",CHECK_TERMINATE_CONTEXT);
 		return;
 	}
-    qInfo()<<"阿里云已经更新!";
+    qInfo()<<"转储服务器已经更新!";
 	dnsCKRequest();
 }
 /*发起 DNS检查*/
@@ -259,7 +259,7 @@ void NetworkMonitor::dnsSTRequestRespond(){
 void NetworkMonitor::loginPreRequest(){
     qDebug()<<"正在检测认证服务器状态...";
 	if(reply) delete reply;
-	reply=netManager->get(aliECS);
+    reply=netManager->get(ipHost);
     QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
 	connect(reply,SIGNAL(finished()),this,SLOT(loginPreRequestRespond()));
 }

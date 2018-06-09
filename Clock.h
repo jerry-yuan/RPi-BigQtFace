@@ -2,7 +2,6 @@
 #define CLOCK_H
 #include <QLCDNumber>
 #include <QObject>
-#include "Beeper.h"
 
 class Clock : public QLCDNumber{
 	Q_OBJECT

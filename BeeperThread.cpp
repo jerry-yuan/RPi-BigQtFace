@@ -1,5 +1,13 @@
 #include "BeeperThread.h"
-#include <wiringPi.h>
+#if _WIN32
+    #define OUTPUT 0
+    #define LOW 0
+    #define HIGH 0
+void digitalWrite(int,int){};
+void pinMode(int,int){};
+#else
+    #include <wiringPi.h>
+#endif
 quint8 BeeperThread::pin=4;
 bool BeeperThread::pinInited=false;
 BeeperThread::BeeperThread(QObject *parent):QThread(parent){

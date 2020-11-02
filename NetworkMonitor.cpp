@@ -25,7 +25,7 @@ NetworkMonitor::NetworkMonitor(QWidget *parent) :
 	//初始化 https策略
 	QSslConfiguration sslConfig;
 	sslConfig.setPeerVerifyMode(QSslSocket::VerifyNone);
-	sslConfig.setProtocol(QSsl::TlsV1_0);
+    sslConfig.setProtocol(QSsl::TlsV1_0OrLater);
 	//初始化 内网检测地址(vUPC)
 	vUPC.setUrl(QUrl("http://v.upc.edu.cn"));
     vUPC.setRawHeader("Accept","text/html");
@@ -194,12 +194,13 @@ void NetworkMonitor::ipHostRequestRespond(){
 		return;
 	}
     qInfo()<<"转储服务器已经更新!";
-	dnsCKRequest();
+    //dnsCKRequest();
+    checkFinished();
 }
 /*发起 DNS检查*/
 void NetworkMonitor::dnsCKRequest(){
     qDebug()<<"正在检查DNS数据...";
-	QByteArray data("login_token=19255,ed8e437c6e7a30b57a60aa1e787b9940&format=json&domain=jerryhome.tk&record_id=195272416");
+    QByteArray data("login_token=114191,82320c0e071bca721cbecc6b98f3e5d8&format=json&domain=jerryhome.tk&record_id=195272416");
 	if(reply) delete reply;
     reply=netManager->post(DNSReader,data);
     QTimer::singleShot(NET_WAITING_TIME,reply,SLOT(abort()));
@@ -214,8 +215,9 @@ void NetworkMonitor::dnsCKRequestRespond(){
         checkTerminated("请求DNSPod超时!",CHECK_TERMINATE_CONTEXT);
 		return;
 	}
-	if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute)!=200)
+    if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute)!=200){
         return checkTerminated("检查DNS时发生HTTP错误!",CHECK_TERMINATE_CONTEXT);
+    }
 	QJsonDocument QJDom=QJsonDocument::fromJson(reply->readAll());
 	if(QJDom.object().take("status").toObject().take("code").toString().toInt()!=1)
         checkTerminated("检查DNS时发生鉴权错误!",CHECK_TERMINATE_CONTEXT);
@@ -229,7 +231,7 @@ void NetworkMonitor::dnsCKRequestRespond(){
 }
 /*发起 DNS设定*/
 void NetworkMonitor::dnsSTRequest(){
-	QString raw="login_token=19255,ed8e437c6e7a30b57a60aa1e787b9940&format=json&domain=jerryhome.tk&record_id=195272416&sub_domain=www&record_type=A&record_line=%e9%bb%98%e8%ae%a4&value=%1";
+    QString raw="login_token=114191,82320c0e071bca721cbecc6b98f3e5d8&format=json&domain=jerryhome.tk&record_id=195272416&sub_domain=www&record_type=A&record_line=%e9%bb%98%e8%ae%a4&value=%1";
 	raw=raw.arg(ui->intIP->text());
     qDebug()<<"正在更新DNS数据...";
 	if(reply) delete reply;
@@ -320,7 +322,7 @@ void NetworkMonitor::loginPgChkRequestRespond(){
 /*发起 登录网号*/
 void NetworkMonitor::loginRequest(){
     QString raw("operatorPwd=&operatorUserId=&password=%2&queryString=%4&service=%3&userId=%1&validcode=%5");
-    raw=raw.arg("1409030301","123456Abc","cmcc",QString(netLoginQS.toLocal8Bit().toPercentEncoding()),validCode);
+    raw=raw.arg("S18070010","123456Abc","cmcc",QString(netLoginQS.toLocal8Bit().toPercentEncoding()),validCode);
     //raw=raw.arg("1407030207","528204","cmcc",QString(netLoginQS.toLocal8Bit().toPercentEncoding()),validCode);
 	if(reply) delete reply;
 	reply=netManager->post(netLogin,raw.toLatin1());

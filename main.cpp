@@ -5,8 +5,12 @@
 #include <QSqlDatabase>
 #include <QCommandLineParser>
 #include <QCommandLineOption>
-#include <wiringPi.h>
-#include <Beeper.h>
+#if _WIN32
+    void wiringPiSetup(){}
+#else
+    #include <wiringPi.h>
+#endif
+//#include <Beeper.h>
 int main(int argc, char *argv[]){
     QApplication app(argc, argv);
     app.setApplicationDisplayName("RPi-BigFace");

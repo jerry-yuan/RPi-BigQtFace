@@ -110,13 +110,14 @@ void Logger::run(){
         //sqlHandle=DBUtil::getSqlHandle();
         while(!logQueue->empty()){
             temp=logQueue->dequeue();
-            sqlHandle.prepare("insert into faceLog (timestamp,content,type,file,line,function) values (?,?,?,?,?,?)");
+            sqlHandle.prepare("insert into faceLog (timestamp,day,content,type,file,line,function) values (?,?,?,?,?,?,?)");
             sqlHandle.bindValue(0,QVariant(temp.time.toTime_t()));
-            sqlHandle.bindValue(1,temp.message);
-            sqlHandle.bindValue(2,QVariant(temp.type));
-            sqlHandle.bindValue(3,temp.file);
-            sqlHandle.bindValue(4,QVariant(temp.line));
-            sqlHandle.bindValue(5,temp.function);
+            sqlHandle.bindValue(1,QVariant(temp.time.toString("yyyy-MM-dd")));
+            sqlHandle.bindValue(2,temp.message);
+            sqlHandle.bindValue(3,QVariant(temp.type));
+            sqlHandle.bindValue(4,temp.file);
+            sqlHandle.bindValue(5,QVariant(temp.line));
+            sqlHandle.bindValue(6,temp.function);
             sqlHandle.exec();
         }
         db.commit();
